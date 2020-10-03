@@ -85,6 +85,7 @@ var Player_Img = new SR_Image;             // stickman weapons and shadow     or
 var Drop_Img = new SR_Image;               // icons for items when dropped    original name: Ra
 var Item_Img = new SR_Image;               // icons for items in inventory    original name: Ua
 var Enemy_Head_Img = new SR_Image;         // enemy head images               original name: Va
+var Elite_Img = new SR_Image;              // elite head images               
 var Sign_Img = new SR_Image;               // blank sign icon                 original name: Wa
 var Projectiles_Img = new SR_Image;        // images for all projectiles      original name: Za
 var Title_Img = new SR_Image;              // main menu title                 original name: $a
@@ -1748,6 +1749,7 @@ function gameStartup(a,b,c,d,e,g,k,r,m,n,F,H,M){ // original name: Te()
         Drop_Img.IGset("icon.gif");
         Item_Img.IGset("item.gif");
         Enemy_Head_Img.IGset("en.gif");
+        Elite_Img.IGset("elite.gif");
         Sign_Img.IGset("next.gif");
         Projectiles_Img.IGset("mag.gif");
         Title_Img.IGset("title.gif");
@@ -1774,6 +1776,7 @@ function gameStartup(a,b,c,d,e,g,k,r,m,n,F,H,M){ // original name: Te()
         imgToArray(Drop_Img);
         imgToArray(Item_Img);
         imgToArray(Enemy_Head_Img);
+        imgToArray(Elite_Img);
         imgToArray(Sign_Img);
         imgToArray(Projectiles_Img);
         imgToArray(Title_Img);
@@ -7101,6 +7104,7 @@ var En_Is_2nd_Att = 60; // original name Re
 var EN_EXP = 61;    // original name ng
 var En_Gold = 62;   // original name En_Gold
 var En_Drop1 = 63;  // original name og
+var En_DropRate1 = 64, En_DropRate2 = 66, En_DropRate3 = 68;
 var EN_Info = [     // EN_Info original name: B[]
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
 // Halloween Hills       ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
@@ -7949,6 +7953,8 @@ var EN_Info = [     // EN_Info original name: B[]
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
     [95,13,21,1,0xFFD700,0x993300,99999 ,1    ,1,17,0xFFFF3300,2,8 ,8 ,4 ,4 ,0  ,0  ,300 ,10,3 ,99 ,0,0,0  ,0,10  ,20  ,1 ,0   ,60 ,50  ,500 ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,1E4  ,9999,561,100,0  ,0  ,0  ,5  ], // 338
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
+// Other
+    [13,5 ,2 ,1,0xEE9933,0x996633,250   ,1    ,0,5 ,0xFFFF6010,2,16,16,16,8,0  ,0  ,120  ,20,1,100 ,0,1,0  ,0,1   ,2   ,1 ,15  ,50 ,200 ,30  ,1,50  ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,200  ,70  ,56 ,15 ,0  ,0  ,0  ,0  ], // Elite fire attack 339
 
     []
 ];
@@ -7978,6 +7984,7 @@ function SR_Enemy(){ // original name: hh()
     this.EN_poison_ticks = new Int32Array(EN_arr_size);  // duration of poison original name: .D
     this.EN_poison_dmg = new Int32Array(EN_arr_size);    // damage of poison   original name: .H
     this.EN_frozen_ticks = new Int32Array(EN_arr_size);  // duration of freeze original name: .B
+    this.EN_elite_type = new Int32Array(EN_arr_size);  // elite type original name: .B
     this.EN_index_total = 0;                             // cumulative count   original name: .bb
     this.EN_center = 20;                                 // center of body     original name: .n
     for (var i=0; i<EN_arr_size; i++){
@@ -8011,7 +8018,6 @@ SR_Enemy.prototype.ENspawn = function(x_pos,y_pos,ID){ // aa.add
         this.EN_state[this.EN_index_current] = 0;
         this.EN_piece_size[this.EN_index_current] = 0;
         this.EN_is_grounded[this.EN_index_current] = 0;
-        this.EN_health[this.EN_index_current] = EN_Info[ID][EN_LP];
         this.EN_reload[this.EN_index_current] = 0;
         this.EN_is_found[this.EN_index_current] = 0;
         this.EN_is_provoked[this.EN_index_current] = 0;
@@ -8020,6 +8026,20 @@ SR_Enemy.prototype.ENspawn = function(x_pos,y_pos,ID){ // aa.add
         this.EN_poison_ticks[this.EN_index_current] = 0;
         this.EN_poison_dmg[this.EN_index_current] = 0;
         this.EN_frozen_ticks[this.EN_index_current] = 0;
+        this.EN_elite_type[this.EN_index_current] = -1;
+        if (random(100) < 8) {
+            //this.EN_elite_type[this.EN_index_current] = randomRange(1, 6);
+            this.EN_elite_type[this.EN_index_current] = 1;
+        }
+        this.healthMult = 1;
+        this.EN_elite_type[this.EN_index_current] == 0 ? this.healthMult = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 1 ? this.healthMult = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 2 ? this.healthMult = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 3 ? this.healthMult = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 4 ? this.healthMult = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 5 ? this.healthMult = 1.2 :
+            healthMult = 1; 
+        this.EN_health[this.EN_index_current] = EN_Info[ID][EN_LP]*this.healthMult;
         this.EN_index_current++;
         this.EN_index_total++;
     }
@@ -8044,6 +8064,7 @@ SR_Enemy.prototype.ENkill = function(a){ // aa.sub
     this.EN_poison_ticks[a] = this.EN_poison_ticks[this.EN_index_current-1];
     this.EN_poison_dmg[a] = this.EN_poison_dmg[this.EN_index_current-1];
     this.EN_frozen_ticks[a] = this.EN_frozen_ticks[this.EN_index_current-1];
+    this.EN_elite_type[a] = this.EN_elite_type[this.EN_index_current-1];
     this.EN_index_current--;
 };
 
@@ -8168,7 +8189,7 @@ SR_Enemy.prototype.ENtakeDamage = function(splash,type,type_parameter,ATmin,ATma
             target_ID = e;
             Players.PL_dmg_dealt += en_damage;
             Target_HP_Current = this.EN_health[e];
-            Target_HP_Max = EN_Info[this.EN_array_ID[e]][EN_LP];
+            Target_HP_Max = EN_Info[this.EN_array_ID[e]][EN_LP]*this.healthMult;
             En_Count_From_Max = 100;
             Target_Array_ID = this.EN_array_ID[e];
 
@@ -8460,8 +8481,9 @@ function enemyDeath(enemy,en_ID,xp_is_given){ // original name: Jg()
         direction = enemy.EN_state[en_ID]-1;
 
     for (var d=En_Drop1; d<En_Drop1+6; d+=2){
+        var eliteDrop = En_Drop1 + 2*randInt(3);
             // if enemy has a drop in this slot    &&  random*drop rate*100 < 100  **aka**  random < 1/drop rate
-        if (EN_Info[enemy.EN_array_ID[en_ID]][d]!=0 && Math.random()*EN_Info[enemy.EN_array_ID[en_ID]][d+1]*100 < drop_rate_mult) // item drop
+        if ((EN_Info[enemy.EN_array_ID[en_ID]][d]!=0 && Math.random()*EN_Info[enemy.EN_array_ID[en_ID]][d+1]*100 < drop_rate_mult) || (enemy.EN_elite_type[en_ID] >= 0 && eliteDrop == d)) // item drop
             Drops.DPadd(enemy.EN_joint[en_ID][direction].x,enemy.EN_joint[en_ID][direction].y,EN_Info[enemy.EN_array_ID[en_ID]][d],0,0);
     }
     if (3*Math.random() < 1) // 33% chance of dropping gold
@@ -8481,7 +8503,7 @@ SR_Enemy.prototype.ENmain = function(){ // hh.prototype.move
             this.EN_poison_ticks[current_en]--;
             this.EN_health[current_en] = maxOf(this.EN_health[current_en]-this.EN_poison_dmg[current_en],0);
             Target_HP_Current = this.EN_health[current_en];
-            Target_HP_Max = EN_Info[this.EN_array_ID[current_en]][EN_LP];
+            Target_HP_Max = EN_Info[this.EN_array_ID[current_en]][EN_LP]*this.healthMult;
             En_Count_From_Max = 100;
             Target_Array_ID = this.EN_array_ID[current_en];
         }
@@ -10002,7 +10024,26 @@ SR_Enemy.prototype.ENrenderEnemy = function(){ // hh.prototype.b()
         head_img = EN_Info[this.EN_array_ID[i]][2];
         head_color = EN_Info[this.EN_array_ID[i]][4];
         body_color = EN_Info[this.EN_array_ID[i]][5];
+        attack_color = EN_Info[this.EN_array_ID[i]][10];
+        attack_ele_type = EN_Info[this.EN_array_ID[i]][33];
+        attack_ele_param = EN_Info[this.EN_array_ID[i]][34];
         en_size = EN_Info[this.EN_array_ID[i]][EN_Size];
+        var limb_size = (150-this.EN_piece_size[i])/150*en_size;
+
+        // elites
+        switch (this.EN_elite_type[i]) {
+            case 1: //Fire
+                body_color = 0xFF2200; //Fiery red
+                EN_Info[this.EN_array_ID[i]][33] = 1;
+                EN_Info[this.EN_array_ID[i]][34] = 50;
+                EN_Info[this.EN_array_ID[i]][10] = 0xFFFF0000;
+                //Horns
+                dispItemCentered(Elite_Img,floor(this.EN_joint[i][0].x),floor(this.EN_joint[i][0].y-4*limb_size),floor(16*limb_size),floor(16*limb_size),32,0,16,16,0xFFFFFF);
+                if (this.EN_health[i] > 0) {
+                    this.ENattack(i,339 - this.EN_array_ID[i]);
+                }
+            break;
+        }
 
         if (this.EN_frozen_ticks[i]>0){
             head_color = 0x5A8EE1; // pale blue
@@ -10014,7 +10055,6 @@ SR_Enemy.prototype.ENrenderEnemy = function(){ // hh.prototype.b()
             head_color = 0x33FF00; // light green
             body_color = 0x339900; // dark green
         }
-        var limb_size = (150-this.EN_piece_size[i])/150*en_size;
 
         switch (this.EN_species_ID[i]){
             case 0: // walker
@@ -10192,7 +10232,7 @@ SR_Enemy.prototype.ENrenderEnemy = function(){ // hh.prototype.b()
         }
         if ((Sett_LP_Bar_Disp&2)>0 && this.EN_health[i]>0){
             drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,12*en_size,1,0x990000); // red
-            drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,floor(12*en_size*this.EN_health[i]/EN_Info[this.EN_array_ID[i]][EN_LP]),1,0x00CC00); // green
+            drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,floor(12*en_size*this.EN_health[i]/(EN_Info[this.EN_array_ID[i]][EN_LP]*this.healthMult)),1,0x00CC00); // green
         }
     }
 };
@@ -10718,7 +10758,7 @@ var Stage_Spawns = [
         [0,1  ,Ground     ,2,8 ,Ground_Middle,3,1],
         [0,1  ,Ground     ,2,8 ,Ground_Left  ,0,3,Ground_Middle,3,2],
         [0,1  ,Ground     ,2,8 ,Ground_Left  ,3,1,Ground_Middle,3,2,Ground_Right,3,3],
-        [0,100,Ground_Left,2,2 ,Ground_Middle,3,2,Ground_Right ,4,1]
+        [0,100,Ground_Left,2,2 ,Ground_Middle,3,2,Ground_Middle ,4,1]
     ],
     [   //2 Grassland 1
         [0,2  ,Ground_Left,5,1 ,Ground_Middle,5,2,Ground_Right ,5,3 ],
