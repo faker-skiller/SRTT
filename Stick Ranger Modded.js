@@ -2089,7 +2089,7 @@ function menuAndMap(){ // original name: uf()
 
         Current_Screen = 0;
         WorldMap.MAP_tile_horizontal_spacer = 0;
-        Sequence_Step = 6;
+        Sequence_Step = 7;
         antiCheatSet();
         menuCredits();
     } else if (Sequence_Step==5){                                                     // Sequence: loading after clicking Load Game
@@ -2099,6 +2099,13 @@ function menuAndMap(){ // original name: uf()
     } else if (Sequence_Step==6){                                                     // Sequence: World Map
         WorldMap.MAPmain();
         drawUI(2);
+    } else if (Sequence_Step==7){                 // Sequence: Title card lore
+        largeMessage(Large_Text,DIRE_Win_Center,96,"Story:",204,148,73,0xFF,100,0,0,0xFF,16,24);                                   
+        textBox(Large_Text,DIRE_Win_Center,180,"The monsters have stolen all of the candy.",0xCC9449,0x640000);
+        textBox(Large_Text,DIRE_Win_Center,192,"Go beat them up and get it back!",0xCC9449,0x640000);
+        if (Clicked){
+            Sequence_Step = 6;
+        }
     }
 }
 
@@ -2378,7 +2385,8 @@ function PvEscreens(){ // original name: vf()
     } else if (Sequence_Step==40){                                                    // Sequence: Game Clear screen
         largeMessage(Large_Text,DIRE_Win_Center,112,"Congratulation",204,148,73,0xFF,100,0,0,0xFF,16,24);
         largeMessage(Large_Text,DIRE_Win_Center,144,"Game Clear",204,148,73,0xFF,100,0,0,0xFF,16,24);
-        textBox(Large_Text,DIRE_Win_Center,256,"(C) 2008-2017 DAN-BALL",0xCC9449,0x640000);
+        textBox(Large_Text,DIRE_Win_Center,224,"(C) 2008-2017 DAN-BALL",0xCC9449,0x640000);
+        textBox(Large_Text, DIRE_Win_Center, 256, "(C) 2020 [random]",0xCC9449,0x640000);
         for (var s=0; s<Stickmen_Slots; s++){
             xx = 166+60*s-Players.PL_joint[s][2].x;
             yy = 224-Players.PL_joint[s][2].y;
