@@ -7984,7 +7984,9 @@ function SR_Enemy(){ // original name: hh()
     this.EN_poison_ticks = new Int32Array(EN_arr_size);  // duration of poison original name: .D
     this.EN_poison_dmg = new Int32Array(EN_arr_size);    // damage of poison   original name: .H
     this.EN_frozen_ticks = new Int32Array(EN_arr_size);  // duration of freeze original name: .B
-    this.EN_elite_type = new Int32Array(EN_arr_size);  // elite type original name: .B
+    this.EN_elite_type = new Int32Array(EN_arr_size);    // elite type  
+    this.healthMult = new Int32Array(EN_arr_size);       // enemy health multiplier
+    this.sizeMult = new Int32Array(EN_arr_size);         // enemy size
     this.EN_index_total = 0;                             // cumulative count   original name: .bb
     this.EN_center = 20;                                 // center of body     original name: .n
     for (var i=0; i<EN_arr_size; i++){
@@ -8028,18 +8030,22 @@ SR_Enemy.prototype.ENspawn = function(x_pos,y_pos,ID){ // aa.add
         this.EN_frozen_ticks[this.EN_index_current] = 0;
         this.EN_elite_type[this.EN_index_current] = -1;
         if (random(100) < 8) {
-            //this.EN_elite_type[this.EN_index_current] = randomRange(1, 6);
-            this.EN_elite_type[this.EN_index_current] = 1;
+            this.EN_elite_type[this.EN_index_current] = randomRange(0, 2);
+            //this.EN_elite_type[this.EN_index_current] = 1;
         }
-        this.healthMult = 1;
-        this.EN_elite_type[this.EN_index_current] == 0 ? this.healthMult = 1.2 : 
-            this.EN_elite_type[this.EN_index_current] == 1 ? this.healthMult = 1.2 : 
-            this.EN_elite_type[this.EN_index_current] == 2 ? this.healthMult = 1.2 : 
-            this.EN_elite_type[this.EN_index_current] == 3 ? this.healthMult = 1.2 : 
-            this.EN_elite_type[this.EN_index_current] == 4 ? this.healthMult = 1.2 : 
-            this.EN_elite_type[this.EN_index_current] == 5 ? this.healthMult = 1.2 :
-            healthMult = 1; 
-        this.EN_health[this.EN_index_current] = EN_Info[ID][EN_LP]*this.healthMult;
+        //Health
+        this.healthMult[this.EN_index_current] = 1;
+        this.EN_elite_type[this.EN_index_current] == 0 ? this.healthMult[this.EN_index_current] = 5 : 
+            this.EN_elite_type[this.EN_index_current] == 1 ? this.healthMult[this.EN_index_current] = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 2 ? this.healthMult[this.EN_index_current] = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 3 ? this.healthMult[this.EN_index_current] = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 4 ? this.healthMult[this.EN_index_current] = 1.2 : 
+            this.EN_elite_type[this.EN_index_current] == 5 ? this.healthMult[this.EN_index_current] = 1.2 :
+            this.healthMult[this.EN_index_current] = 1; 
+        this.EN_health[this.EN_index_current] = EN_Info[ID][EN_LP]*this.healthMult[this.EN_index_current];
+        //Size
+        this.sizeMult[this.EN_index_current] = 1;
+            if (this.EN_elite_type[this.EN_index_current] == 0) this.sizeMult[this.EN_index_current] = 2;
         this.EN_index_current++;
         this.EN_index_total++;
     }
@@ -8065,6 +8071,7 @@ SR_Enemy.prototype.ENkill = function(a){ // aa.sub
     this.EN_poison_dmg[a] = this.EN_poison_dmg[this.EN_index_current-1];
     this.EN_frozen_ticks[a] = this.EN_frozen_ticks[this.EN_index_current-1];
     this.EN_elite_type[a] = this.EN_elite_type[this.EN_index_current-1];
+    this.sizeMult[a] = this.sizeMult[this.EN_index_current-1];
     this.EN_index_current--;
 };
 
@@ -8120,7 +8127,7 @@ SR_Enemy.prototype.ENfindEnemy = function(left_bound,bottom_bound,right_bound,to
     var closest_target_ID = -1;
 
     for (var i=0; i<this.EN_index_current; i++){
-        en_size = EN_Info[this.EN_array_ID[i]][EN_Size];
+        en_size = EN_Info[this.EN_array_ID[i]][EN_Size]*this.sizeMult[i];
         species = EN_Info[this.EN_array_ID[i]][EN_Species];
         hitbox = (Hitboxvar1[species]>>1)*((en_size>>1)+1);
 
@@ -8147,7 +8154,7 @@ SR_Enemy.prototype.ENtakeDamage = function(splash,type,type_parameter,ATmin,ATma
     hitbox_height *= 0.5;
 
     for (var e=0; e<this.EN_index_current; e++){
-        hurtbox_height = EN_Info[this.EN_array_ID[e]][EN_Size];
+        hurtbox_height = EN_Info[this.EN_array_ID[e]][EN_Size]*this.sizeMult[e];
         species = EN_Info[this.EN_array_ID[e]][EN_Species];
         hurtbox_width = (Hitboxvar1[species]>>1)*((hurtbox_height>>1)+1);
         hurtbox_height *= Hitboxvar2[species]>>1;
@@ -8166,7 +8173,8 @@ SR_Enemy.prototype.ENtakeDamage = function(splash,type,type_parameter,ATmin,ATma
                     this.EN_poison_dmg[e] = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Po_Resist]/100));
             } else {
                 if (type==0) // physical damage
-                    en_damage = maxOf(1,en_damage-EN_Info[this.EN_array_ID[e]][Ph_Resist]);
+                    en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Ph_Resist]/100));
+                    if (this.EN_elite_type[e] == 0) { en_damage = Math.ceil(en_damage/2); }
                 if (type==1) // fire damage
                     en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Fi_Resist]/100));
                 if (type==2) // ice damage
@@ -8189,7 +8197,7 @@ SR_Enemy.prototype.ENtakeDamage = function(splash,type,type_parameter,ATmin,ATma
             target_ID = e;
             Players.PL_dmg_dealt += en_damage;
             Target_HP_Current = this.EN_health[e];
-            Target_HP_Max = EN_Info[this.EN_array_ID[e]][EN_LP]*this.healthMult;
+            Target_HP_Max = EN_Info[this.EN_array_ID[e]][EN_LP]*this.healthMult[e];
             En_Count_From_Max = 100;
             Target_Array_ID = this.EN_array_ID[e];
 
@@ -8503,7 +8511,7 @@ SR_Enemy.prototype.ENmain = function(){ // hh.prototype.move
             this.EN_poison_ticks[current_en]--;
             this.EN_health[current_en] = maxOf(this.EN_health[current_en]-this.EN_poison_dmg[current_en],0);
             Target_HP_Current = this.EN_health[current_en];
-            Target_HP_Max = EN_Info[this.EN_array_ID[current_en]][EN_LP]*this.healthMult;
+            Target_HP_Max = EN_Info[this.EN_array_ID[current_en]][EN_LP]*this.healthMult[current_en];
             En_Count_From_Max = 100;
             Target_Array_ID = this.EN_array_ID[current_en];
         }
@@ -8542,7 +8550,7 @@ SR_Enemy.prototype.ENmain = function(){ // hh.prototype.move
 // Walker species original name: lb
 window.fff = SR_Enemy.prototype.ENwlk; // da.fff = hh.prototype.lb
 SR_Enemy.prototype.ENwlk = function(current_en){
-    var wlk_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var wlk_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -8699,7 +8707,7 @@ SR_Enemy.prototype.ENsnk = function(current_en){
 window.fff = SR_Enemy.prototype.ENbat;
 SR_Enemy.prototype.ENbat = function(current_en){
     var bat_vec_c = new Vector2D;
-    var bat_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var bat_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -8807,7 +8815,7 @@ SR_Enemy.prototype.ENbat = function(current_en){
 window.fff = SR_Enemy.prototype.ENdgn;
 SR_Enemy.prototype.ENdgn = function(current_en){
     var dgn_vec_c = new Vector2D;
-    var dgn_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var dgn_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -8885,7 +8893,7 @@ SR_Enemy.prototype.ENdgn = function(current_en){
 // Stickman species original name: ma
 window.fff = SR_Enemy.prototype.ENstk;
 SR_Enemy.prototype.ENstk = function(current_en,type){
-    var stk_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var stk_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9028,7 +9036,7 @@ SR_Enemy.prototype.ENstk = function(current_en,type){
 // Tree species original name: na
 window.fff = SR_Enemy.prototype.ENtre;
 SR_Enemy.prototype.ENtre = function(current_en,type){
-    var tre_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var tre_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9094,7 +9102,7 @@ SR_Enemy.prototype.ENtre = function(current_en,type){
 // Wheel species original name: va
 window.fff = SR_Enemy.prototype.ENwhe;
 SR_Enemy.prototype.ENwhe = function(current_en){
-    var whe_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var whe_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9265,7 +9273,7 @@ SR_Enemy.prototype.ENfsh = function(current_en){
 // Mushroom species original name: xa
 window.fff = SR_Enemy.prototype.ENmsh;
 SR_Enemy.prototype.ENmsh = function(current_en){
-    var msh_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var msh_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9330,7 +9338,7 @@ SR_Enemy.prototype.ENmsh = function(current_en){
 window.fff = SR_Enemy.prototype.ENeel;
 SR_Enemy.prototype.ENeel = function(current_en,type){
     var vec_d = new Vector2D;
-    var eel_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var eel_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9456,7 +9464,7 @@ SR_Enemy.prototype.ENeel = function(current_en,type){
 // Spider species original name: mb
 window.fff = SR_Enemy.prototype.ENspr;
 SR_Enemy.prototype.ENspr = function(current_en){
-    var spr_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var spr_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9607,7 +9615,7 @@ SR_Enemy.prototype.ENspr = function(current_en){
 // Cactus species original name: nb
 window.fff = SR_Enemy.prototype.ENcts;
 SR_Enemy.prototype.ENcts = function(current_en){
-    var cts_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var cts_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9679,7 +9687,7 @@ SR_Enemy.prototype.ENcts = function(current_en){
 window.fff = SR_Enemy.prototype.ENcop;
 SR_Enemy.prototype.ENcop = function(current_en){
     var cop_vec_c = new Vector2D;
-    var cop_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var cop_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9774,7 +9782,7 @@ SR_Enemy.prototype.ENcop = function(current_en){
 // Bouncer species original name: pb
 window.fff = SR_Enemy.prototype.ENbun;
 SR_Enemy.prototype.ENbun = function(current_en){
-    var bun_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var bun_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9857,7 +9865,7 @@ SR_Enemy.prototype.ENbun = function(current_en){
 window.fff = SR_Enemy.prototype.ENgrm;
 SR_Enemy.prototype.ENgrm = function(current_en){
     var grm_vec_c = new Vector2D;
-    var grm_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var grm_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -9955,7 +9963,7 @@ SR_Enemy.prototype.ENgrm = function(current_en){
 // Digger species original name: rb
 window.fff = SR_Enemy.prototype.ENdig;
 SR_Enemy.prototype.ENdig = function(current_en){
-    var dig_size = EN_Info[this.EN_array_ID[current_en]][EN_Size];
+    var dig_size = EN_Info[this.EN_array_ID[current_en]][EN_Size]*this.sizeMult[current_en];
 
     // spawn
     if (this.EN_state[current_en]==0){
@@ -10027,11 +10035,16 @@ SR_Enemy.prototype.ENrenderEnemy = function(){ // hh.prototype.b()
         attack_color = EN_Info[this.EN_array_ID[i]][10];
         attack_ele_type = EN_Info[this.EN_array_ID[i]][33];
         attack_ele_param = EN_Info[this.EN_array_ID[i]][34];
-        en_size = EN_Info[this.EN_array_ID[i]][EN_Size];
+        en_size = EN_Info[this.EN_array_ID[i]][EN_Size]*this.sizeMult[i];
         var limb_size = (150-this.EN_piece_size[i])/150*en_size;
 
         // elites
         switch (this.EN_elite_type[i]) {
+            case 0: //Physical
+                body_color = 0x888888; //Gray
+                //Hat
+                dispItemCentered(Elite_Img,floor(this.EN_joint[i][0].x),floor(this.EN_joint[i][0].y-4*limb_size),floor(16*limb_size),floor(16*limb_size),16,0,16,16,0xFFFFFF);
+            break;
             case 1: //Fire
                 body_color = 0xFF2200; //Fiery red
                 EN_Info[this.EN_array_ID[i]][33] = 1;
@@ -10232,7 +10245,7 @@ SR_Enemy.prototype.ENrenderEnemy = function(){ // hh.prototype.b()
         }
         if ((Sett_LP_Bar_Disp&2)>0 && this.EN_health[i]>0){
             drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,12*en_size,1,0x990000); // red
-            drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,floor(12*en_size*this.EN_health[i]/(EN_Info[this.EN_array_ID[i]][EN_LP]*this.healthMult)),1,0x00CC00); // green
+            drawButton(floor(this.EN_joint[i][0].x)-6*en_size,floor(this.EN_joint[i][0].y)-10*en_size,floor(12*en_size*this.EN_health[i]/(EN_Info[this.EN_array_ID[i]][EN_LP]*this.healthMult[i])),1,0x00CC00); // green
         }
     }
 };
