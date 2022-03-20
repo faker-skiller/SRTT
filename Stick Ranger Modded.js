@@ -47,6 +47,10 @@
 // regex search for "var1.+original name" to find original name (names like ca, ea, fa) of var1
 
 // general order: left,right,top,bottom,x_pos,y_pos,width,height
+var Prologue = false;
+var Dodge_Cooldown = 0;
+var Dodging = false;
+var Dodge_Unlocked = false;
 var Debug_Mode = 0;                        // display debug mode on/off       original name: ca
 var DIRE_curr_sequence = ["0: Title Screen: launch game","1: Title Screen: spawn stickmen","2: Title Screen: enable buttons","3: Title Screen: class select","4: Title Screen: load new game","5: Title Screen: load saved game","6: Title Screen: world map","","","","10: Enemy Screen: load screen","11: Enemy Screen: fade in","12: Enemy Screen: play","13: Enemy Screen: fade out","","","","","","","20: Enemy Screen: pause","","","","","","","","","","30: Enemy Screen: game over","","","","","","","","","","40: Enemy Screen: game clear","","","","","","","","","","50: Town Screen: load screen","51: Town Screen: fade in","52: Town Screen: play","53: Town Screen: open shop","54: Town Screen: open book","55: Town Screen: open forget","","","","59: Town Screen: fade out","60: VS Mode Screen: ","61: VS Mode Screen: ","62: VS Mode Screen: ","63: VS Mode Screen: ","64: VS Mode Screen: ","","","","","","70: VS Mode Screen: ","71: VS Mode Screen: ","72: VS Mode Screen: ","73: VS Mode Screen: "];                    // current game mode                (new variable)
 var Win_Width = 512;                       // width of game window            original name: ea
@@ -56,6 +60,7 @@ var Win_Height = 384;                      // height of game window           or
 var DIRE_Inv_Height = 0;                   // height of inventory UI
 var DIRE_Inv_Top = Win_Height-DIRE_Inv_Height; // 384-128 = 256
 var DIRE_Win_Center = Win_Width>>1;
+var Sequence_Timer = 0;
 var DIRE_Ticks_Per_Second = 60;            // number of game ticks per second  (new variable)
 var Game_Mode = 0;                         // 0: PvE, 1: PvP, 2:upload screen original name: ga
 var Game_ID;      // your ID#, checked to see if the save code belongs to you original name: ha
@@ -98,6 +103,65 @@ var Map_Elev_Index = new SR_Image;         // elevation index                 or
 var Map_Tiles_Img = new SR_Image;          // land/rock/sand image            original name: jb
 var Map_Feature_Index = new SR_Image;      // feature index                   original name: kb
 var Map_Features_Img = new SR_Image;       // tree/castle/cave image          original name: lb
+var Moon_Img = new SR_Image;
+var Eclipse_Img = new SR_Image;
+var Wood_Img = new SR_Image;
+var Control_Img = new SR_Image;
+// Audio vars
+var playedBGM = false,
+    playedSound = false,
+    sfxEnabled = true;
+// Sounds
+    snd_atangel = new Audio('data/audio/sfx/atc_Angel.wav'),
+    snd_atboxer = new Audio('data/audio/sfx/atc_Boxer.wav'),
+    snd_atglad = new Audio('data/audio/sfx/atc_Gladiator.wav'),
+    snd_atgunner = new Audio('data/audio/sfx/atc_Gunner.wav'),
+    snd_atmag = new Audio('data/audio/sfx/atc_Magician.wav'),
+    snd_atpriest = new Audio('data/audio/sfx/atc_Priest.wav'),
+    snd_atsniper = new Audio('data/audio/sfx/atc_Sniper.wav'),
+    snd_atwhipper = new Audio('data/audio/sfx/atc_Whipper.wav'),
+    snd_deathboss1 = new Audio('data/audio/sfx/Boss.wav'),
+    snd_deathboss2 = new Audio('data/audio/sfx/Boss2.wav'),
+    snd_casherror = new Audio('data/audio/sfx/casherror.wav'),
+    snd_cashregister = new Audio('data/audio/sfx/cashregister.wav'),
+    snd_click = new Audio('data/audio/sfx/click.wav'),
+    snd_click2 = new Audio('data/audio/sfx/click2.wav'),
+    snd_click3 = new Audio('data/audio/sfx/click3.wav'),
+    snd_compose = new Audio('data/audio/sfx/compose.wav'),
+    snd_deathplayer = new Audio('data/audio/sfx/dead.wav'),
+    snd_dmgplayer = new Audio('data/audio/sfx/dmg_Player.wav'),
+    snd_fire = new Audio('data/audio/sfx/fire.wav'),
+    snd_freeze = new Audio('data/audio/sfx/freeze.wav'),
+    snd_gong_finish = new Audio('data/audio/sfx/gong_finish.wav'),
+    snd_gong_start = new Audio('data/audio/sfx/gong_start.wav'),
+    snd_hotel = new Audio('data/audio/sfx/hotel.wav'),
+    snd_ice = new Audio('data/audio/sfx/ice.wav'),
+    snd_levelup = new Audio('data/audio/sfx/Levelup.wav'),
+    snd_money = new Audio('data/audio/sfx/money.wav'),
+    snd_onigiri = new Audio('data/audio/sfx/onigiri.wav'),
+    snd_parameter = new Audio('data/audio/sfx/parameter.wav'),
+    snd_physical = new Audio('data/audio/sfx/physical.wav'),
+    snd_poison = new Audio('data/audio/sfx/poison.wav'),
+    snd_rebirth = new Audio('data/audio/sfx/rebirth.wav'),
+    snd_sp = new Audio('data/audio/sfx/sp.wav'),
+    snd_thunder = new Audio('data/audio/sfx/thunder.wav'),
+    snd_weapon = new Audio('data/audio/sfx/weapon.wav'),
+    snd_crit = new Audio('data/audio/sfx/clang.wav');
+    // BGM
+    LevelBGM = [];
+    mus_moonsong = new Audio('data/audio/music/Moonsong.mp3');
+    mus_restarea = new Audio('data/audio/music/Rest Area.mp3');
+    mus_jungle = new Audio('data/audio/music/Akrillic.mp3');
+    mus_wetforest = new Audio('data/audio/music/Ancient Ruins.mp3');
+    mus_cavewater = new Audio('data/audio/music/Underground Reservoir.mp3');
+    mus_boss = new Audio('data/audio/music/Boss.mp3');
+    RegisterLevelBGM(mus_moonsong);
+    RegisterLevelBGM(mus_restarea);
+    RegisterLevelBGM(mus_jungle);
+    RegisterLevelBGM(mus_wetforest);
+    RegisterLevelBGM(mus_cavewater);
+    RegisterLevelBGM(mus_boss);
+// Variables
 var Sequence_Step = 0;                     // game sequence                   original name: f
 var Text_Fade = 0;                         // fadeout timer                   original name: mb
 var Current_Stage = 0;                     // ID of stage                     original name: h
@@ -121,6 +185,8 @@ var Target_HP_Max = 0;                     // max LP of target                or
 var En_Count_From_Max = 0;                 // max that can spawn per screen   original name: Hb
 var Target_Array_ID = 0;                   // array position of target        original name: Ib
 var Click_To_Sell_Mode = 0;                // click to sell mode              original name: Jb
+var Forge_Mode = 0;                        // augmenting items                
+var Augment_Cost = 0;                      // augment cost
 var DIRE_crit_highlight = 0;               // highlight critical hits          (new variable)
 var Enemy_Spawn_Scale = 100;               // enemy spawn cap scale (100 means numbers are percentages aka denominator 100) original name: Kb
 var DIRE_Enemy_Lim_Mult = 1;               // Enemy Limit Multiplier   ******(WARNING: THIS WILL CAUSE MAJOR LAG)******
@@ -150,6 +216,8 @@ var DEX = [0,0,0,0,0,0,0,0];               // DEX                             or
 var MAG = [0,0,0,0,0,0,0,0];               // MAG                             original name: nc
 var AT_Min = [0,0,0,0,0,0,0,0];            // minimum AT of each stickman     original name: oc
 var AT_Max = [0,0,0,0,0,0,0,0];            // maximum AT of each stickman     original name: pc
+var Reloading = [0,0,0,0,0,0,0,0];         // reloading status                new
+var Status_Buff = [0,0,0,0,0,0,0,0];       // buff status                     new
 var Agi_Min = [0,0,0,0,0,0,0,0];           // minimum AGI of each stickman    original name: qc
 var Agi_Max = [0,0,0,0,0,0,0,0];           // maximum AGI of each stickman    original name: rc
 var Range = [0,0,0,0,0,0,0,0];             // range of each stickman          original name: tc
@@ -162,6 +230,8 @@ var Sett_Drag_Dead_Body = 1;               // if dead body parts draggable    or
 var STR_Aura = [0,0,0,0,0,0,0,0];          // STR aura points                 original name: Ac
 var DEX_Aura = [0,0,0,0,0,0,0,0];          // DEX aura points                 original name: Bc
 var MAG_Aura = [0,0,0,0,0,0,0,0];          // MAG aura points                 original name: Cc
+var Dodge_Buff = [0,0,0,0,0,0,0,0];        // Dodge buff                      new
+var Berserk_Aura = [0,0,0,0,0,0,0,0];      // Damage aura points              new
 var Item_Inv = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];      // Item_Inv[41]    original name: q[]
 var Comp1_Inv = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];     // Comp1_Inv[41]   original name: Dc[]
 var Comp2_Inv = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];     // Comp2_Inv[41]   original name: Ec[]
@@ -182,6 +252,7 @@ var Item_Ico_Big = 4;                      // inventory icon number           or
 var Item_Class_ID = 5;                     // class for item/weapon           original name: Rc
 var Item_Color = 6;                        // color of item                   original name: Sc
 var Ring_HBox_Rate = 7;                    // ring hit frequency               (new variable)
+var Priest_Buff = Ring_HBox_Rate;          // priest buff ID                   (new variable)
 var Item_Splash = 9;                       // if it has splash DMG (0/1)       (new variable)
 var Item_AT_Min = 10;                      // item's minimum damage           original name: Tc
 var Item_AT_Max = 11;                      // item's maximum damage           original name: Uc
@@ -251,17 +322,12 @@ var Card_Heals = 46;                       // Heal's Card effect ID           or
 var Card_Rings = 47;                       // Ring's Card effect ID           original name: ce
 var Crown_Imprl = 48;                      // Imperial Crown effect ID        original name: de
 var Crown_Anger = 49;                      // Anger Crown effect ID           original name: ee
+var Shard = 50;                            // Shard
 var Shop_Items = [                         // item ID#'s for each shop        original name: Lc
     // Shop (Town)
     [
-        [3  ,7  ,11 ,15 ,54 ,64 ,68 ,72 ,116,121,131,137,153,178,202,214,226,253,312,328,345,360,394,410,429,451,471,479,496,504,512,520,549], // List of gloves
-        [4  ,8  ,12 ,16 ,55 ,65 ,69 ,73 ,117,122,132,138,154,179,203,215,227,254,313,329,346,361,395,411,430,452,472,480,497,505,513,521,550], // Swords
-        [5  ,9  ,13 ,17 ,56 ,66 ,70 ,74 ,118,123,133,139,155,180,204,216,228,255,314,330,347,362,396,412,431,453,473,481,498,506,514,522,551], // Bows
-        [6  ,10 ,14 ,18 ,57 ,67 ,71 ,75 ,119,124,134,140,156,181,205,217,229,256,315,331,348,363,397,413,432,454,474,482,499,507,515,523,552], // Orbs
-        [58 ,60 ,61 ,62 ,63 ,115,126,127,128,129,135,141,157,182,206,218,230,257,316,332,349,364,398,414,433,455,475,483,500,508,516,524,553], // Staffs
-        [76 ,77 ,78 ,79 ,80 ,81 ,82 ,83 ,120,125,136,142,158,183,207,219,231,258,317,333,350,365,399,415,434,456,476,484,501,509,517,525,554], // Guns
-        [188,189,190,191,192,193,194,195,196,197,198,199,200,201,208,220,232,259,318,334,351,366,400,416,435,457,477,485,502,510,518,526,555], // Whips
-        [289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,319,335,352,367,401,417,436,458,478,486,503,511,519,527,556]  // Rings
+        [3  ,4  ,5 ,6 ,58 ,76 ,188 ,289, 0], // List of weapons
+        [564  ,565  ,566 ,567 ,568 ,569, 0, 0, 0] // Shards
     ],
     // Compo Shop (Village)
     [
@@ -295,19 +361,55 @@ var Shop_Items = [                         // item ID#'s for each shop        or
         [277,285,377,279,287,379,281,308,381,283,310,0] //  ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,    // Level 1-5 Jewels
     ]
 ];
+var Forgable_Items = [ // items that can be forged
+    [3, 4, 5, 6, 58, 76, 188, 289] // tier 1
+];
+var PhysicalShard = 564,
+    FireShard     = 565,
+    IceShard      = 566,
+    ThunderShard  = 567,
+    PoisonShard   = 568,
+    FreezeShard   = 569,
+    AncientShard  = 570;
+
+var Forge_Recipes = [ // forge recipes
+    [4, FireShard, 8],
+
+    [5, PhysicalShard, 9],
+    [5, FireShard, 13],
+    [5, IceShard, 17],
+    [5, ThunderShard, 56],
+    [5, PoisonShard, 66],
+    [5, FreezeShard, 70],
+
+    [6, PhysicalShard, 10],
+    [6, FireShard, 14],
+    [6, IceShard, 18],
+    [6, ThunderShard, 57],
+    [6, PoisonShard, 67],
+    [6, FreezeShard, 71],
+
+    [58, PhysicalShard, 60],
+    [58, FireShard, 61],
+    [58, IceShard, 62],
+    [58, ThunderShard, 63],
+    [58, PoisonShard, 115],
+    [58, FreezeShard, 126]
+];
 var Item_Catalogue = Array(558); // array of item arrays original name: u
 
 //   items    [  ] = [0        ,1,2  ,3 ,4 ,5             ,6         ,7,8,9,10,11,2,3,4,5,6,7,8,1,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,37];
 Item_Catalogue[0] =  [""       ,0,0  ,0 ,0 ,Class_Stickman,0         ,0,0,0,0 ,0 ,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 Item_Catalogue[59] = ["NG"     ,0,0  ,13,12,Class_Compo   ,0xFF888888,0,0,0,0 ,0 ,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 Item_Catalogue[1] =  ["gold"   ,0,0  ,1 ,0 ,Class_Pickup  ,0xFFFFFFFF,1,0,0,0 ,0 ,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-Item_Catalogue[2] =  ["candy corn",0,0  ,2 ,0 ,Class_Pickup  ,0xFFFFFFFF,1,0,0,0 ,0 ,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+Item_Catalogue[2] =  ["monster corn",0,0  ,2 ,0 ,Class_Pickup  ,0xFFFFFFFF,1,0,0,0 ,0 ,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
 //   gloves   [   ] = [0                ,1,2   ,3,4 ,5,6         ,7,8   ,9,10,11 ,12,13,14,15,16,7,18,19       ,20,21,22,23,24,25,26 ,27 ,28,9,30,31,2,33,4,35,36,37,8,39,40 ,41];
 Item_Catalogue[3] =   ["glove"          ,0,100 ,3,2 ,1,0xFF6666FF,1,0   ,0,1 ,3  ,0 ,0 ,15,20,15,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0  ,0  ,0 ,0,0  ,0,0,0 ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[7] =   ["mach punch"     ,1,250 ,3,2 ,1,0xFFCCCCCC,1,0   ,0,1 ,3  ,0 ,0 ,5 ,10,15,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0  ,0  ,0 ,0,0  ,0,0,0 ,0,0 ,0  ,0];// ,   ,
-Item_Catalogue[11] =  ["thunder glove"  ,1,500 ,3,2 ,1,0xFFFFFF66,1,3   ,0,2 ,4  ,1 ,10,15,22,15,1,1 ,0xFFFFFF00,1,12,48,16,16,0 ,0  ,10 ,10,0,100,0,0,0 ,3,0 ,10 ,0,0,1 ,29 ,0];
-Item_Catalogue[15] =  ["fire glove"     ,1,750 ,3,2 ,1,0xFFFF4444,1,3   ,0,2 ,4  ,1 ,8 ,15,22,15,1,5 ,0xFFFF6611,2,16,32,16,32,0 ,0  ,40 ,10,0,100,0,0,0 ,1,50,10 ,0,0,7 ,9  ,0];
+Item_Catalogue[11] =  ["fire glove"     ,1,500 ,3,2 ,1,0xFFFF4444,1,3   ,0,2 ,4  ,1 ,8 ,15,22,15,1,5 ,0xFFFF6611,2,16,32,16,32,0 ,0  ,40 ,10,0,100,0,0,0 ,1,50,10 ,0,0,7 ,9  ,0];
+Item_Catalogue[15] =  ["ice glove",      1,750, 3,2 ,1,5500671   ,1,9   ,0,2 ,4  ,2 ,1 ,15,22,15,1,4 ,4288413682,1,16,16,16,16,0 ,10 ,30 ,20,0,95 ,1,0,0 ,2,35,12 ,0,0,3 ,5  ,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
+//Item_Catalogue[15] =  ["thunder glove"  ,1,750 ,3,2 ,1,0xFFFFFF66,1,3   ,0,2 ,4  ,1 ,10,15,22,15,1,1 ,0xFFFFFF00,1,12,48,16,16,0 ,0  ,10 ,10,0,100,0,0,0 ,3,0 ,10 ,0,0,1 ,29 ,0];
 Item_Catalogue[54] =  ["poison glove"   ,1,1000,3,2 ,1,0xFF00FF00,1,3   ,0,2 ,4  ,1 ,8 ,15,22,15,1,6 ,0xFF00FF00,2,16,16,16,16,0 ,0  ,10 ,10,0,100,0,0,0 ,4,15,12 ,0,0,2 ,2  ,0];
 Item_Catalogue[64] =  ["freeze glove"   ,2,1500,3,2 ,1,0xFFCCCCFF,1,3   ,0,2 ,4  ,1 ,10,15,24,15,1,4 ,0xFFCCCCFF,1,16,32,16,16,0 ,0  ,10 ,10,0,100,0,0,0 ,5,5 ,15 ,0,0,8 ,12 ,0];
 Item_Catalogue[68] =  ["needle glove"   ,2,2E3 ,3,2 ,1,0xFFCCAA88,1,3   ,0,2 ,4  ,9 ,20,15,24,15,1,9 ,0xFFCCAA88,1,16,16,16,16,30,5  ,10 ,10,0,100,0,0,0 ,0,0 ,50 ,0,0,10,12 ,0];
@@ -340,16 +442,16 @@ Item_Catalogue[520] = ["spark cestus"   ,8,21E3,3,20,1,0xFFFFFF88,1,109 ,0,12,24
 Item_Catalogue[549] = ["sonic cestus"   ,8,22E3,3,20,1,0xFFFFFFFF,1,5703,1,80,120,9 ,10,5 ,8 ,15,1,22,0x44FFFFFF,2,16,8 ,0 ,0 ,0 ,10 ,10 ,5 ,0,90 ,1,0,0 ,0,0 ,-1 ,0];// ,   ,
 
 //   swords   [   ] = [0              ,1,2   ,3,4 ,5,6         ,7,8 ,9,10 ,11 ,12,13,14,15,16,7,18,19       ,20,21,22,23,24,25,26,27 ,28,29,30,31,2,33,34,35,36,37,8,39,40 ,41 ];
-Item_Catalogue[4] =   ["sword"        ,0,100 ,4,3 ,2,0xFF888888,1,0 ,0,1  ,5  ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
-Item_Catalogue[8] =   ["iron sword"   ,1,250 ,4,3 ,2,0xFFAAAAAA,1,0 ,0,5  ,10 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
-Item_Catalogue[12] =  ["fire sword"   ,1,500 ,4,3 ,2,0xFFFF4444,1,1 ,0,10 ,15 ,0 ,0 ,20,30,30,0,5 ,0xFFFF6611,2,16,32,16,32,0 ,0 ,50 ,10,50,100,0,1,0  ,1,20,10 ,0,0,1 ,3  ,10 ];
-Item_Catalogue[16] =  ["thunder sword",1,750 ,4,3 ,2,0xFFFFFF66,1,1 ,0,10 ,15 ,0 ,0 ,20,30,30,1,10,0xFFFFFF44,2,16,16,8 ,8 ,0 ,0 ,12 ,10,50,100,0,0,0  ,3,0 ,10 ,0,0,1 ,7  ,10 ];
-Item_Catalogue[55] =  ["ice sword"    ,1,1000,4,3 ,2,0xFFAAAAFF,1,1 ,0,10 ,15 ,0 ,0 ,20,30,30,0,8 ,0x88AAAAFF,2,12,12,8 ,8 ,0 ,0 ,10 ,10,0 ,100,0,0,0  ,2,20,12 ,0,0,3 ,5  ,10 ];
+Item_Catalogue[4] =   ["sword"        ,0,100 ,4,3 ,2,0xFF884400,1,0 ,0,1  ,5  ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
+Item_Catalogue[8] =   ["fire sword"   ,1,250 ,4,3 ,2,0xFFFF4444,1,1 ,0,5  ,10 ,0 ,0 ,20,30,30,0,5 ,0xFFFF6611,2,16,32,16,32,0 ,0 ,50 ,10,50,100,0,1,0  ,1,20,10 ,0,0,1 ,3  ,10 ];
+Item_Catalogue[12] =  ["ice sword"    ,1,1000,4,3 ,2,0xFFAAAAFF,1,1 ,0,5  ,10 ,0 ,0 ,20,30,30,0,8 ,0x88AAAAFF,2,12,12,8 ,8 ,0 ,0 ,10 ,10,0 ,100,0,0,0  ,2,20,12 ,0,0,3 ,5  ,10 ];
+Item_Catalogue[16] =  ["thunder sword",1,750 ,4,3 ,2,0xFFFFFF66,1,1 ,0,5  ,10 ,0 ,0 ,20,30,30,1,10,0xFFFFFF44,2,16,16,8 ,8 ,0 ,0 ,12 ,10,50,100,0,0,0  ,3,0 ,10 ,0,0,1 ,7  ,10 ];
+Item_Catalogue[55] =  ["iron sword"   ,1,250 ,4,3 ,2,0xFFFFFFFF,1,0 ,0,10 ,15 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[65] =  ["long sword"   ,2,1500,4,3 ,2,0xFFBBBBBB,1,0 ,0,10 ,20 ,0 ,0 ,20,30,35,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[69] =  ["lightsaber"   ,2,2E3 ,4,3 ,2,0xFFFFFF66,2,7 ,0,10 ,15 ,1 ,1 ,20,30,30,1,10,0x88FFFF44,2,16,32,16,16,0 ,0 ,10 ,10,0 ,100,0,0,0  ,3,0 ,70 ,0,0,1 ,7  ,70 ];
 Item_Catalogue[73] =  ["flame sword"  ,2,2500,4,3 ,2,0xFFFF4444,1,7 ,1,10 ,15 ,1 ,5 ,20,30,30,1,6 ,0xFFFF6611,2,8 ,32,16,16,0 ,0 ,20 ,10,0 ,100,0,0,0  ,1,50,70 ,0,0,1 ,3  ,70 ];
 Item_Catalogue[117] = ["frozen sword" ,2,3E3 ,4,3 ,2,0xFF99CCFF,1,7 ,1,10 ,15 ,1 ,20,20,30,30,1,4 ,0xFF99CCFF,2,16,64,64,32,0 ,5 ,10 ,40,0 ,100,0,0,0  ,2,20,70 ,0,0,20,30 ,3  ];
-Item_Catalogue[122] = ["sabel"        ,3,4E3 ,4,21,2,0xFFAAAAAA,1,0 ,0,20 ,40 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
+Item_Catalogue[122] = ["sabel"        ,3,4E3 ,4,21,2,0xFFFFFFFF,1,0 ,0,20 ,40 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[132] = ["fire sabel"   ,3,4500,4,21,2,0xFFFF4444,1,7 ,0,12 ,18 ,1 ,1 ,20,30,30,1,6 ,0xFFFF6611,2,20,6 ,16,16,0 ,0 ,50 ,15,0 ,99 ,1,0,0  ,1,25,20 ,0,0,5 ,6  ,10 ];
 Item_Catalogue[138] = ["thunder sabel",3,5E3 ,4,21,2,0xFFFFFF66,1,10,0,12 ,18 ,1 ,20,20,30,30,1,10,0xFFFFFF44,2,16,16,8 ,8 ,0 ,3 ,9  ,10,10,100,0,0,0  ,3,0 ,20 ,0,0,1 ,29 ,10 ];
 Item_Catalogue[154] = ["ice sabel"    ,3,5500,4,21,2,0xFFAAAAFF,1,7 ,0,12 ,18 ,1 ,1 ,20,30,30,1,4 ,0x88AAAAFF,2,16,32,16,16,0 ,0 ,50 ,10,0 ,90 ,1,0,0  ,2,20,25 ,0,0,10,20 ,10 ];
@@ -357,7 +459,7 @@ Item_Catalogue[179] = ["long sabel"   ,4,6E3 ,4,21,2,0xFFBBBBBB,1,0 ,0,20 ,50 ,0
 Item_Catalogue[203] = ["lightsaber"   ,4,6500,4,21,2,0xFF66FF66,2,7 ,0,15 ,20 ,1 ,1 ,20,30,30,1,18,0x8844FF44,2,16,32,16,16,0 ,0 ,10 ,10,0 ,100,0,0,0  ,3,0 ,100,0,0,1 ,14 ,100];
 Item_Catalogue[215] = ["flame sabel"  ,4,7E3 ,4,21,2,0xFFFF4444,1,7 ,1,15 ,20 ,1 ,5 ,20,30,30,1,6 ,0xFFFF6611,2,8 ,32,16,16,0 ,0 ,20 ,10,0 ,100,0,0,50 ,1,50,100,0,0,2 ,6  ,100];
 Item_Catalogue[227] = ["frozen sabel" ,4,7500,4,21,2,0xFF99CCFF,1,7 ,0,15 ,20 ,1 ,15,20,30,30,1,4 ,0xFF99CCFF,2,12,16,8 ,8 ,0 ,15,100,10,0 ,100,0,0,100,5,5 ,100,0,0,20,30 ,10 ];
-Item_Catalogue[254] = ["blade"        ,5,8E3 ,4,22,2,0xFFAAAAAA,1,0 ,0,50 ,80 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
+Item_Catalogue[254] = ["blade"        ,5,8E3 ,4,22,2,0xFFFFFFFF,1,0 ,0,50 ,80 ,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[271] = ["wooden sword" ,5,8500,4,22,2,0xFF884400,1,0 ,0,1  ,1  ,0 ,0 ,20,30,50,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[313] = ["fire blade"   ,5,8500,4,22,2,0xFFFF4444,1,7 ,0,20 ,20 ,1 ,1 ,20,30,30,1,9 ,0x88FF6611,2,8 ,32,16,16,0 ,0 ,200,15,0 ,99 ,0,0,0  ,1,30,30 ,0,0,3 ,4  ,10 ];
 Item_Catalogue[329] = ["thunder blade",5,9E3 ,4,22,2,0xFFFFFF66,1,7 ,0,20 ,20 ,30,1 ,20,30,30,1,10,0x88FFFF44,2,16,40,32,16,90,0 ,3  ,3 ,0 ,100,0,0,0  ,3,0 ,30 ,0,0,1 ,29 ,1  ];
@@ -366,7 +468,7 @@ Item_Catalogue[361] = ["long blade"   ,6,1E4 ,4,22,2,0xFFBBBBBB,1,0 ,0,50 ,100,0
 Item_Catalogue[395] = ["lightsaber"   ,6,11E3,4,22,2,0xFF6666FF,2,7 ,0,20 ,25 ,1 ,1 ,20,30,30,1,9 ,0x884444FF,2,16,32,16,16,0 ,0 ,10 ,10,0 ,100,0,0,0  ,3,0 ,120,0,0,1 ,45 ,120];
 Item_Catalogue[411] = ["flame blade"  ,6,12E3,4,22,2,0xFFFF4444,1,7 ,1,20 ,25 ,1 ,10,20,30,30,1,6 ,0x88FF4411,2,10,30,16,16,0 ,0 ,60 ,10,-1,90 ,1,0,0  ,1,50,120,0,0,6 ,9  ,120];
 Item_Catalogue[430] = ["frozen blade" ,6,13E3,4,22,2,0xFF99CCFF,1,3 ,1,20 ,25 ,1 ,20,20,30,30,1,4 ,0xCC99CCFF,2,16,64,48,48,0 ,5 ,10 ,40,0 ,100,0,0,0  ,5,5 ,120,0,0,40,60 ,3  ];
-Item_Catalogue[452] = ["GreatSword"   ,7,15E3,4,23,2,0xFFAAAAAA,1,0 ,0,150,250,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
+Item_Catalogue[452] = ["GreatSword"   ,7,15E3,4,23,2,0xFFFFFFFF,1,0 ,0,150,250,0 ,0 ,20,30,30,0,0 ,0         ,1,0 ,0 ,0 ,0 ,0 ,0 ,0  ,0 ,0 ,0  ,0,0,0  ,0,0 ,0  ,0];// ,   ,
 Item_Catalogue[472] = ["fire GS"      ,7,16E3,4,23,2,0xFFFF4444,1,1 ,0,30 ,30 ,0 ,0 ,20,30,30,0,23,0xCCFF6611,2,16,32,16,32,0 ,0 ,200,10,50,100,0,1,0  ,1,35,40 ,0,0,6 ,8  ,15 ];
 Item_Catalogue[480] = ["thunder GS"   ,7,17E3,4,23,2,0xFFFFFF66,1,7 ,0,30 ,30 ,9 ,1 ,20,30,30,1,10,0x88FFFF44,2,8 ,32,16,16,30,0 ,3  ,3 ,0 ,100,0,0,0  ,3,0 ,40 ,0,0,1 ,29 ,10 ];
 Item_Catalogue[497] = ["ice GS"       ,7,18E3,4,23,2,0xFFAAAAFF,1,7 ,1,30 ,30 ,1 ,40,20,30,30,1,22,0x88AAAAFF,2,8 ,48,48,48,0 ,5 ,6  ,10,0 ,100,1,0,0  ,2,25,45 ,0,0,25,55 ,10 ];
@@ -376,13 +478,13 @@ Item_Catalogue[521] = ["flame GS"     ,8,21E3,4,23,2,0xFFFF4444,1,7 ,1,30 ,35 ,1
 Item_Catalogue[550] = ["frozen GS"    ,8,22E3,4,23,2,0xFF99CCFF,1,3 ,1,30 ,35 ,1 ,20,20,30,30,1,4 ,0xCC99CCFF,2,16,64,48,48,0 ,5 ,10 ,40,0 ,100,0,0,0  ,5,5 ,130,0,0,40,60 ,9  ];
 
 //    bows    [   ] = [0                  ,1,2   ,3,4 ,5,6         ,7,8   ,9,10,11  ,12,13 ,14,15,16 ,7,18,19      ,20,21,22,3,4,25,26,27,28,29,30,1,2,3,4,35,36,7,8,39,40,41,2,43,44       ,45,46,47,48,49,50,51,52,53,54,55,56,57];
-Item_Catalogue[5] =   ["bow"              ,0,100 ,5,4 ,3,0xFFFFCC66,1,4   ,0,2 ,3   ,1 ,100,30,40,90 ,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
-Item_Catalogue[9] =   ["triple shot"      ,1,250 ,5,14,3,0xFFFFCC66,1,3   ,0,2 ,3   ,3 ,100,30,40,150,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
-Item_Catalogue[13] =  ["poison arrow"     ,1,500 ,5,4 ,3,0xFF00FF00,1,4   ,0,4 ,6   ,1 ,100,30,40,90 ,1,3,0xFF00FF00,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,4,50,10,1,0,1 ,1 ,1 ,0,6 ,0xFF00FF00,1,32,32,32,32,0 ,0,100,10,0 ,100,0,0];
-Item_Catalogue[17] =  ["double arrow"     ,1,750 ,5,15,3,0xFFFFCC66,1,4   ,0,8 ,12  ,2 ,100,30,40,90 ,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
-Item_Catalogue[56] =  ["fire arrow"       ,1,1000,5,4 ,3,0xFFFF4444,1,4   ,0,8 ,12  ,1 ,100,30,40,90 ,1,3,0xFFFF4444,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,1,50,12,1,1,4 ,6 ,1 ,0,5 ,0xFFFF6611,2,16,32,16,32,0 ,0,100,10,30,100,0,1];
-Item_Catalogue[66] =  ["triple arrow"     ,2,1500,5,16,3,0xFFFFCC66,1,4   ,0,8 ,12  ,3 ,100,30,40,90 ,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
-Item_Catalogue[70] =  ["quad arrow"       ,2,2E3 ,5,17,3,0xFFFFCC66,1,4   ,0,8 ,12  ,4 ,100,30,40,90 ,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
+Item_Catalogue[5] =   ["bow",0,100 ,5,4 ,3,16764040,1,4   ,0,4 ,6   ,1 ,50,50,60,110 ,1,3,4294954120,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
+Item_Catalogue[9] =   ["triple volley"    ,1,250 ,5,16,3,0xFFFFCC66,1,4   ,0,1 ,3   ,3 ,100,30,40,90,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
+Item_Catalogue[13] =  ["fire arrow",1,250,5,4 ,3,16729122,1,4   ,0,6,8,1 ,50,50,60,110 ,1,3,4294919202,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,1,10,10,1,1,2,4,1,0,24,4294919202,2,16,32,32,32,0,0,200,25,30,100,0,1];
+Item_Catalogue[17] =  ["ice arrow",1,250,5,4 ,3,4500223,1,4   ,0,6,8,1 ,50,50,60,110 ,1,3,4282690303,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,2,35,30,1,0,15,20,1,0,7,4282690303,2,32,32,32,32,0,0,10,40,0,100,1,0];
+Item_Catalogue[56] =  ["light arrow",1,250,5,4 ,3,16772778,1,4   ,0,6,8,1 ,150,50,60,110 ,1,3,4294962858,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,3,0,10,2,0,5,5,2,0,13,4294962858,2,16,16,8,8,0,30,110,30,4,100,0,2];
+Item_Catalogue[66] =  ["poison arrow",1,250,5,4 ,3,8978210,1,4   ,0,6,8,1 ,50,50,60,110 ,1,3,4287168290,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,4,10,15,3,0,1,1,3,0,6,4287168290,1,16,16,8,8,0,0,50,25,0,100,0,1];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
+Item_Catalogue[70] =  ["freeze arrow",1,250,5,4 ,3,11193599,1,4 ,0,6,8,1 ,50,50,60,110 ,1,3,4289383679,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,5,5,10,7,0,3,5,3,1,4,4289383679,1,16,16,8,8,0,0,50,25,0,100,1,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
 Item_Catalogue[74] =  ["oct arrow"        ,2,2500,5,17,3,0xFFFFCC66,1,4   ,0,4 ,6   ,8 ,100,45,60,90 ,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
 Item_Catalogue[118] = ["double poison"    ,2,3E3 ,5,15,3,0xFF99CC00,1,4   ,0,8 ,12  ,2 ,100,30,40,90 ,1,3,0xFF99CC00,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,4,50,20,1,0,1 ,2 ,1 ,0,6 ,0x8899CC00,1,32,32,32,32,0 ,0,100,10,0 ,100,0,0]
 Item_Catalogue[123] = ["quint shot"       ,3,4E3 ,5,14,3,0xFFFFCC66,1,3   ,0,4 ,6   ,5 ,100,30,40,150,1,3,0xFFFFCC66,1,16,16,8,8,0 ,0,300,10,5,100,0,0,0,0,0 ,0 ,0];// ,  ,  , ,  ,          , ,  ,  ,  ,  ,  , ,   ,  ,  ,   , ,
@@ -413,13 +515,13 @@ Item_Catalogue[522] = ["oct poison shot"  ,8,21E3,5,14,3,0xFF99CC00,1,3   ,0,8 ,
 Item_Catalogue[551] = ["hell fire shot"   ,8,22E3,5,14,3,0xFFFF4444,1,3   ,0,16,24  ,3 ,7  ,30,40,90 ,1,3,0xFFFF4444,1,16,16,8,8,0 ,0,300,10,0,100,0,0,0,1,50,55,5,1,24,32,3 ,1,22,0xFFFF6611,2,16,16,16,16,50,0,100,10,0 ,100,1,0];
 
 //    orbs    [   ] = [0                 ,1,2   ,3,4 ,5,6         ,7,8  ,9,10 ,11 ,12,13,14 ,15 ,16,7,18,19       ,20,21,22,23,24,25 ,26 ,27 ,28,29,30,31,2,3,4,35,6,7,8,39,40 ,41,2,43,44       ,45,46,47 ,48,49 ,50,51,52 ,53,54,55,56,57];
-Item_Catalogue[6] =   ["magic"           ,0,100 ,6,5 ,4,0xFF00FFFF,1,3  ,0,5  ,10 ,1 ,30,80 ,90 ,90,0,2 ,0xFF0088FF,1,16,16,8 ,8 ,0  ,0  ,300,10,0 ,100,0,0,0,0,0 ,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
-Item_Catalogue[10] =  ["explosion"       ,1,250 ,6,5 ,4,0xFFFF8800,1,3  ,0,5  ,10 ,1 ,30,80 ,90 ,90,0,2 ,0xFFFF8800,1,16,16,8 ,8 ,0  ,0  ,100,10,0 ,100,0,0,0,1,0 ,0,1,1,5 ,10 ,1 ,0,2 ,0x44FF8800,1,48,48 ,32,32 ,0 ,0 ,10 ,10,0 ,100,0,0];
-Item_Catalogue[14] =  ["ice"             ,1,500 ,6,5 ,4,0xFFBBBBFF,1,3  ,0,5  ,10 ,1 ,30,80 ,90 ,90,0,7 ,0xFF8888FF,1,16,16,8 ,8 ,0  ,0  ,100,10,0 ,100,0,0,0,2,30,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
-Item_Catalogue[18] =  ["fire"            ,1,750 ,6,5 ,4,0xFFFF2222,1,4  ,0,2  ,6  ,1 ,60,80 ,90 ,80,1,5 ,0xFFFF6611,2,16,32,16,16,0  ,0  ,100,10,5 ,100,0,0,0,1,80,0,1,1,2 ,6  ,1 ,0,5 ,0xFFFF6611,2,32,32 ,32,32 ,0 ,0 ,200,10,50,100,0,1];
-Item_Catalogue[57] =  ["thunder"         ,1,1000,6,5 ,4,0xFFFFFF66,1,5  ,0,1  ,30 ,3 ,5 ,80 ,90 ,80,1,10,0xFFFFFF66,2,16,16,16,16,0  ,0  ,100,10,0 ,100,0,0,0,3,0 ,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
-Item_Catalogue[67] =  ["freeze"          ,2,1500,6,5 ,4,0xFFCCCCFF,1,3  ,0,5  ,10 ,1 ,30,80 ,90 ,90,1,16,0xFFCCCCFF,1,16,16,8 ,8 ,0  ,0  ,100,10,0 ,100,0,0,0,5,50,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
-Item_Catalogue[71] =  ["blizzard"        ,2,2E3 ,6,5 ,4,0xFF8888FF,1,8  ,0,5  ,10 ,9 ,30,120,135,90,1,16,0xFF8888FF,1,16,16,8 ,8 ,100,0  ,100,10,8 ,100,0,0,0,2,30,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
+Item_Catalogue[6] =   ["magic",0,100 ,6,5 ,4,16711935,1,3  ,0,5  ,10 ,1 ,30,80 ,90 ,90,0,2 ,0xFFFF00FF,1,16,16,8 ,8 ,0  ,0  ,300,10,0 ,100,0,0,0,0,0 ,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
+Item_Catalogue[10] =  ["earth",1,250,6,5 ,4,16746564,1,4,0,10,15,1 ,100,80,90,90,0,2 ,4294936644,1,16,16,8 ,8 ,0  ,0  ,300,10,4,100,0,0,0,0,0 ,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
+Item_Catalogue[14] =  ["fire",1,250,6,5 ,4,16711680,1,3,0,5,10,1 ,30,80,90,90,1,16,4294901760,1,16,16,8 ,8 ,0  ,0  ,300,10,0,100,0,0,0,1,0 ,0,1,1,2,5,1,0,2,4294919168,1,32,32,32,32,0,0,5,25,0,100,1,0];
+Item_Catalogue[18] =  ["ice",1,250,6,5 ,4,22015,1,3,0,15,20,1,25,110,120,90,1,7,4287155455,1,16,16,8 ,8 ,0  ,0  ,300,10,1,100,0,0,0,2,25,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
+Item_Catalogue[57] =  ["thunder",1,250,6,5 ,4,16776994,1,3,0,11,33,1,30,80,90,120,1,10,4294967074,1,16,16,8 ,8 ,0  ,15,20,10,0,101,1,0,0,3,0,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
+Item_Catalogue[67] =  ["poison",1,250,6,5 ,4,11206434,1,3,0,0,0,1 ,5,80,90,90,0,6,4289396514,1,32,32,16,16,0  ,0  ,300,25,0,100,0,0,0,4,15,0,1,0,1,1,1,0,6,4289396514,1,32,2,16,16,0,0,1,25,0,100,1,0];
+Item_Catalogue[71] =  ["freeze",1,250,6,5 ,4,13421823,1,6,0,3,7,3,30,80,90,90,0,15,4291611903,1,16,16,8 ,8 ,0  ,0  ,300,10,1,100,0,0,0,5,5,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,0,0,100,0,0];
 Item_Catalogue[75] =  ["volcano"         ,2,2500,6,5 ,4,0xFFFF4400,1,4  ,0,2  ,6  ,1 ,50,120,135,80,0,12,0xFFFF4400,2,16,16,8 ,8 ,0  ,0  ,100,10,8 ,100,0,0,0,1,50,0,4,1,2 ,6  ,9 ,0,5 ,0xFFFF6611,2,16,32 ,16,32 ,50,0 ,100,10,5 ,98 ,0,1];
 Item_Catalogue[119] = ["thunder storm"   ,2,3E3 ,6,5 ,4,0xFFFFFF33,1,8  ,0,1  ,30 ,12,0 ,120,135,90,1,10,0xFFFFFF33,2,16,16,8 ,8 ,100,0  ,100,10,90,100,0,0,0,3,0 ,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
 Item_Catalogue[124] = ["delta explosion" ,3,4E3 ,6,24,4,0xFFFF8800,1,9  ,1,10 ,20 ,3 ,5 ,80 ,90 ,80,1,2 ,0x88FF8822,2,8 ,40,24,24,10 ,10 ,15 ,3 ,0 ,80 ,1,0,0,1,0 ,0,0];// ,   ,  , ,  ,          , ,  ,   ,  ,   ,  ,  ,   ,  ,  ,   , ,
@@ -449,13 +551,14 @@ Item_Catalogue[523] = ["pyroclastic flow",8,21E3,6,26,4,0xFFFF4400,1,4  ,0,2  ,6
 Item_Catalogue[552] = ["thunderbolt"     ,8,22E3,6,26,4,0xFFFFFF33,2,3  ,0,0  ,0  ,1 ,30,120,135,90,0,2 ,0xFFFFFF66,2,16,16,4 ,4 ,0  ,0  ,200,10,0 ,100,0,0,0,3,0 ,0,1,1,1 ,999,1 ,0,18,0xFFFFFF66,2,64,512,64,512,0 ,20,50 ,10,0 ,100,0,0];
 
 //   staffs   [   ] = [0                  ,1,2   ,3 ,4 ,5,6         ,7,8,9,10 ,11,12,13,14,15,16 ,7,18,19       ,20,21,22,23,24,25,26 ,27 ,28,29,30,1,2,33,4,35,6,37];
-Item_Catalogue[58] =  ["staff"            ,0,100 ,12,11,5,0xFF9900FF,1,6,0,1  ,2  ,1,0 ,80,90,70 ,0,15,0xFFCC99FF,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
-Item_Catalogue[60] =  ["staff of wood"    ,1,250 ,12,11,5,0xFF884400,1,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFF996633,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
-Item_Catalogue[61] =  ["long staff"       ,1,500 ,12,11,5,0xFFAAAAAA,1,6,0,3  ,4  ,1,0 ,80,90,110,0,15,0xFFAAAAAA,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
-Item_Catalogue[62] =  ["staff of thunder" ,1,750 ,12,11,5,0xFFFFFF66,1,6,0,1  ,9  ,1,0 ,80,90,70 ,0,15,0xFFFFFF66,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,3,0 ,0,0];
-Item_Catalogue[63] =  ["staff of ice"     ,1,1000,12,11,5,0xFFBBBBFF,1,6,0,4  ,5  ,1,0 ,80,90,70 ,0,15,0xFFBBBBFF,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,2,10,0,0];
-Item_Catalogue[115] = ["battle staff"     ,2,1500,12,11,5,0xFFFF4444,1,6,0,10 ,10 ,1,0 ,80,90,30 ,0,15,0xFFFF6666,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
-Item_Catalogue[126] = ["staff of fire"    ,2,2E3 ,12,11,5,0xFFFF6611,1,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFFFF6611,2,24,24,24,24,0 ,0  ,100,10,0,100,0,0,0 ,1,30,0,0];
+Item_Catalogue[58] =  ["staff"            ,0,100 ,12,11,5,0xFF884400,0,6,0,1  ,2  ,1,0 ,80,90,70 ,0,15,0xFFCC99FF,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,10,0];
+Item_Catalogue[60] =  ["staff of earth"   ,1,250 ,12,11,5,0xFFAA8844,1,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFFAA8844,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,20,0];
+Item_Catalogue[61] =  ["staff of fire"    ,1,250 ,12,11,5,0xFFFF6611,2,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFFFF6611,2,24,24,24,24,0 ,0  ,100,10,0,100,0,0,0 ,1,30,15,0];
+Item_Catalogue[62] =  ["staff of ice"     ,1,250 ,12,11,5,0xFFBBBBFF,4,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFFBBBBFF,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,2,10,5 ,0];
+Item_Catalogue[63] =  ["staff of thunder" ,1,250 ,12,11,5,0xFFFFFF66,3,6,0,1  ,9  ,1,0 ,80,90,70 ,0,15,0xFFFFFF66,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,3,0 ,25,0];
+Item_Catalogue[115] = ["staff of poison"  ,1,250 ,12,11,5,0xFF99FF44,5,6,0,0  ,1  ,1,0 ,80,90,70 ,0,15,0xFF99FF44,1,24,24,8 ,8 ,0 ,0  ,100,10,0,100,0,0,0 ,4,20,25,0];
+Item_Catalogue[126] = ["staff of freeze"  ,1,250 ,12,11,5,0xFFCCCCFF,6,6,0,2  ,3  ,1,0 ,80,90,70 ,0,15,0xFFCCCCFF,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,5,20,25,0];
+
 Item_Catalogue[127] = ["lightning staff"  ,2,2500,12,11,5,0xFFFFFF66,1,5,0,1  ,25 ,1,10,80,90,70 ,1,10,0xFFFFFF66,2,16,24,16,16,10,0  ,100,20,0,100,0,0,0 ,3,0 ,0,0];
 Item_Catalogue[128] = ["staff of poison"  ,2,3E3 ,12,11,5,0xFF44FF44,1,6,0,0  ,1  ,1,0 ,80,90,70 ,0,15,0xFF44FF44,1,24,24,8 ,8 ,0 ,0  ,100,10,0,100,0,0,0 ,4,20,0,0];
 Item_Catalogue[129] = ["long wood staff"  ,3,4E3 ,12,11,5,0xFF996633,1,6,0,10 ,15 ,1,0 ,80,90,130,0,15,0xFF996633,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
@@ -485,11 +588,11 @@ Item_Catalogue[524] = ["giga exp rod"     ,8,21E3,12,60,5,0xFFFF8800,1,6,1,10 ,1
 Item_Catalogue[553] = ["power rod"        ,8,22E3,12,60,5,0xFF990000,1,6,0,100,100,1,0 ,80,90,30 ,0,21,0xFF990000,2,24,24,24,24,0 ,0  ,100,40,0,100,0,0,0 ,0,0 ,0,0];
 
 //    guns    [   ] = [0                  ,1,2   ,3 ,4 ,5,6         ,7,8  ,9,10 ,11 ,12,13 ,14 ,15 ,16,17,18,19       ,20,21,22,23,24,25,26 ,27 ,28,29,30,31,2,33,34,35 ,36,37,38,39,40 ,41,2,43,44       ,45,46,47,48,49,50,51,52 ,53,54,55,56,57];
-Item_Catalogue[76] =  ["gun"              ,0,100 ,14,13,6,0xFF999999,1,3  ,0,2  ,6  ,1 ,30 ,20 ,30 ,60 ,1,17,0xFF999999,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0  ,0  ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
-Item_Catalogue[77] =  ["handgun"          ,1,250 ,14,13,6,0xFFCCCCCC,1,3  ,0,8  ,12 ,1 ,30 ,20 ,30 ,60 ,1,17,0xFFCCCCCC,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0  ,5  ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
-Item_Catalogue[78] =  ["submachine-gun"   ,1,500 ,14,27,6,0xFF666699,1,3  ,0,4  ,8  ,1 ,30 ,5  ,10 ,50 ,1,17,0xFF666699,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0  ,5  ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
-Item_Catalogue[79] =  ["shotgun"          ,1,750 ,14,28,6,0xFF996633,1,3  ,0,1  ,20 ,5 ,30 ,50 ,60 ,50 ,0,13,0xFF996633,1,16,16,8 ,8 ,5 ,0  ,30 ,10,0 ,100,0,1,0  ,0,0  ,15 ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
-Item_Catalogue[80] =  ["rifle"            ,1,1000,14,29,6,0xFF669999,1,3  ,0,20 ,40 ,1 ,50 ,50 ,60 ,120,1,17,0xFF669999,1,16,32,8 ,8 ,0 ,0  ,300,10,0 ,100,0,0,0  ,0,0  ,10 ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
+Item_Catalogue[76] =  ["gun"              ,0,100 ,14,13,6,0xFF999999,1,3  ,0,2  ,6  ,1 ,30 ,20 ,30 ,60 ,1,17,0xFF999999,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0  ,8  ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
+Item_Catalogue[77] =  ["revolver"         ,1,250 ,14,61,6,0xFFCCCCCC,1,3  ,0,8  ,12 ,1 ,30 ,20 ,30 ,60 ,1,17,0xFFCCCCCC,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0,100/7,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
+Item_Catalogue[78] =  ["smg"              ,1,500 ,14,27,6,0xFF666699,1,3  ,0,2  ,4  ,1 ,30 ,5  ,10 ,50 ,1,17,0xFF666699,1,16,16,8 ,8 ,0 ,0  ,50 ,10,0 ,100,0,0,0  ,0,0  ,5  ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
+Item_Catalogue[79] =  ["shotgun"          ,1,750 ,14,28,6,0xFF996633,1,3  ,0,1  ,20 ,5 ,30 ,50 ,60 ,50 ,0,13,0xFF996633,1,16,16,8 ,8 ,5 ,0  ,30 ,10,0 ,100,0,1,0  ,0,0  ,20 ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
+Item_Catalogue[80] =  ["rifle"            ,1,1000,14,29,6,0xFF669999,1,3  ,0,20 ,40 ,1 ,50 ,50 ,60 ,120,1,17,0xFF669999,1,16,32,8 ,8 ,0 ,0  ,300,10,0 ,100,0,0,0  ,0,0  ,13 ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
 Item_Catalogue[81] =  ["grenade"          ,2,1500,14,30,6,0xFFFF6600,1,4  ,0,8  ,12 ,1 ,40 ,70 ,80 ,60 ,1,17,0xFFFF6600,1,16,16,8 ,8 ,0 ,0  ,100,10,10,100,0,0,0  ,1,50 ,25 ,4,1,2  ,6  ,4 ,0,5 ,0xFFFF6611,2,16,32,16,32,0 ,0 ,100,10,8 ,98,0,1];
 Item_Catalogue[82] =  ["laser gun"        ,2,2E3 ,14,31,6,0xFF990000,1,3  ,1,8  ,12 ,1 ,30 ,20 ,30 ,50 ,1,18,0xFF990000,1,8 ,16,8 ,8 ,0 ,0  ,200,10,0 ,100,1,0,0  ,1,100,20 ,0];//  ,   ,  , ,  ,          , ,  ,  ,  ,  ,  ,  ,   ,  ,  ,  , ,
 Item_Catalogue[83] =  ["bazooka"          ,2,2500,14,32,6,0xFF009900,1,3  ,0,40 ,60 ,1 ,30 ,80 ,90 ,60 ,1,17,0xFF009900,1,32,32,16,16,0 ,0  ,50 ,10,5 ,100,0,0,0  ,0,0  ,30 ,3,0,20 ,30 ,6 ,0,6 ,0x88996633,1,24,24,12,12,10,0 ,50 ,20,0 ,97,1,0];
@@ -896,6 +999,14 @@ Item_Catalogue[561] = ["Anger Crown"   ,0,400,19,63,Class_Compo,0xFFDDDDDD,Crown
 Item_Catalogue[562] = ["Anger Crown"   ,0,0  ,0 ,0 ,0          ,0         ,1          ,1  ,1,1              ,9999,1,0,0,0,0,0,18,0xFFFFFF99,2,64,512,64,512,0,0,10,20,0 ,100,1,0,0,3,0,0,0];
 Item_Catalogue[563] = ["Anger Crown"   ,0,0  ,0 ,0 ,0          ,0         ,1          ,1  ,0,1              ,999 ,1,0,0,0,0,0,21,0xFFFFFF99,2,8 ,8  ,16,16 ,0,0,10,3 ,-9,100,1,0,0,3,0,0,0];
 
+//   shards   [   ] = [0               ,1,2  ,3 ,4 ,5          ,6         ,7    ,8  ,9,10            ,11                 ];
+Item_Catalogue[564] = ["Pearl Shard"  ,0,200,20,64,Class_Compo,0xFFFFFFCC,Shard,50 ,0,"It shines" ,"with potential..."];
+Item_Catalogue[565] = ["Spinel Shard"  ,0,200,20,64,Class_Compo,0xFFFF3322,Shard,50 ,0,"It sizzles"  ,"with potential..."];
+Item_Catalogue[566] = ["Opal Shard"    ,0,200,20,64,Class_Compo,0xFF4466FF,Shard,50 ,0,"It twinkles" ,"with potential..."];
+Item_Catalogue[567] = ["Zircon Shard"  ,0,200,20,64,Class_Compo,0xFFFFCC22,Shard,50 ,0,"It crackles" ,"with potential..."];
+Item_Catalogue[568] = ["Jade Shard"    ,0,200,20,64,Class_Compo,0xFFAAFF77,Shard,50 ,0,"It bubbles"  ,"with potential..."];
+Item_Catalogue[569] = ["Quartz Shard"   ,0,200,20,64,Class_Compo,0xFFFFFFFF,Shard,50 ,0,"It glitters"   ,"with potential..."];
+Item_Catalogue[570] = ["Ancient Shard" ,0,1E3,20,64,Class_Compo,0xCCAA88,Shard,50 ,0,"A great beast","once held this. "];
 
 var Save_Code1 = 0;        // original name: fe
 var Saving_Text_Timer = 0; // original name: ge
@@ -926,9 +1037,10 @@ function setSaveCode(save_string_var){ // original name: me()
         Displayed_Object = Sign_Touched_Mode = Current_Screen = Current_Stage = Text_Fade = Sequence_Step = 0;
         Selected_Player = 3;
         Mouse_Up = false;
-        for (var s=0; s<Stickmen_Slots; s++)
+        for (var s=0; s<Stickman_Count; s++)
             MP_Bar[s] = 0;
         Click_To_Sell_Mode = 0;
+        Forge_Mode = 0;
         Players.PLreset();
         Indicators.INreset();
         Projectiles.PJreset();
@@ -1753,11 +1865,15 @@ function gameStartup(a,b,c,d,e,g,k,r,m,n,F,H,M){ // original name: Te()
         Sign_Img.IGset("next.gif");
         Projectiles_Img.IGset("mag.gif");
         Title_Img.IGset("title.gif");
+        Moon_Img.IGset("planet.gif");
+        Eclipse_Img.IGset("eclipse.gif");
         Effect_Img.IGset("ef.gif");
         Hut_Img.IGset("town.gif");
         Water_Img.IGset("Water.gif");
         Water_Red_Img.IGset("water2.gif");
+        Wood_Img.IGset("wood.gif");
         Forget_Tree_Img.IGset("tree.gif");
+        Control_Img.IGset("control.gif");
         Map_Elev_Index.IGset("map.gif");
         Map_Tiles_Img.IGset("mt.gif");
         Map_Feature_Index.IGset("map2.gif");
@@ -1784,11 +1900,15 @@ function gameStartup(a,b,c,d,e,g,k,r,m,n,F,H,M){ // original name: Te()
         imgToArray(Hut_Img);
         imgToArray(Water_Img);
         imgToArray(Water_Red_Img);
+        imgToArray(Wood_Img);
         imgToArray(Forget_Tree_Img);
+        imgToArray(Control_Img);
         imgToArray(Map_Elev_Index);
         imgToArray(Map_Tiles_Img);
         imgToArray(Map_Feature_Index);
         imgToArray(Map_Features_Img);
+        imgToArray(Moon_Img);
+        imgToArray(Eclipse_Img);
         if (Tile_Counter1!=0)
              setTimeout(gameStartup,timePF());
         else Startup_Step++;
@@ -1846,6 +1966,7 @@ function playSequence(){ // original name: sf()
         }
         if (Debug_Mode==1){
             Large_Text.TXoutput(0,0,Frame_Rate+"fps",0xFFFFFF,0x000000);
+            Large_Text.TXoutput(0,28,Dodge_Cooldown+"cooldown",0xFFFFFF,0x000000);
             if (Debug_Mode==1)
                 Large_Text.TXoutput(48,0,Time_Per_Second+"sl",0xFFFFFF,0x000000);
             Large_Text.TXoutput(0,14,""+DIRE_curr_sequence[Sequence_Step],0xFFFFFF,0x000000);
@@ -1880,12 +2001,14 @@ function menuAndMap(){ // original name: uf()
             Enemies.ENreset(1);
             Sequence_Step++;
         }
-    } else if (Sequence_Step==2){                                                     // Sequence: make buttons for new game, new game+, load game, vs mode
+    } else if (Sequence_Step==2){
+        ChangeBGM(mus_moonsong);                                                     // Sequence: make buttons for new game, new game+, load game, vs mode
         Players.PLmain();
         setRangersUI();
         Terrain.TRdrawTerrain();
         Players.PLrenderPlayer();
         dispItemCentered(Title_Img,DIRE_Win_Center,100,365,121,0,Game_Language? 0 :121,365,121,0xFFFFFFFF);
+        textBox(Large_Text,DIRE_Win_Center - 4,140,"Eclipsed!",0x564371,0xFFFFFF);
 
         // add up crowns
         var new_game_plus = false;
@@ -1925,7 +2048,7 @@ function menuAndMap(){ // original name: uf()
                     Comp1_Inv[Stickmen_Slots+s] = 0;
                     Comp2_Inv[Stickmen_Slots+s] = 0;
                 }
-                Sequence_Step++;
+                Sequence_Step += 1;
                 antiCheatSet();
                 setRangersUI();
             }
@@ -1936,8 +2059,13 @@ function menuAndMap(){ // original name: uf()
         if (Team_List[0]!=0 && Team_List[1]!=0 && Team_List[2]!=0 && Team_List[3]!=0){
             textBox(Large_Text,DIRE_Win_Center,235,"Load Game",0xFFFFFF,0x996633);
             if (isMouseHoveredCenter(DIRE_Win_Center,235,128,24)){
-                if (Clicked)
-                    Sequence_Step = 5;
+                if (Clicked) 
+                    if (Stage_Status[1] > Unlocked) Sequence_Step = 5;
+                        else {
+                            Sequence_Step = 7;
+                            Sequence_Timer = 0;
+                        }
+                    
                 drawLine(DIRE_Win_Center-64,243,DIRE_Win_Center+64,243,0xAA0000);
             }
         }
@@ -1952,6 +2080,7 @@ function menuAndMap(){ // original name: uf()
         }
         menuCredits();
     } else if (Sequence_Step==3){                                                     // Sequence: Class Select screen
+        ChangeBGM(mus_restarea); 
         Players.PLmain();
         Terrain.TRdrawTerrain();
         Players.PLrenderPlayer();
@@ -2093,6 +2222,7 @@ function menuAndMap(){ // original name: uf()
         Current_Screen = 0;
         WorldMap.MAP_tile_horizontal_spacer = 0;
         Sequence_Step = 7;
+        Sequence_Timer = 0;
         antiCheatSet();
         menuCredits();
     } else if (Sequence_Step==5){                                                     // Sequence: loading after clicking Load Game
@@ -2100,14 +2230,22 @@ function menuAndMap(){ // original name: uf()
         Sequence_Step = 6;
         //Current_Stage = 57, Sequence_Step = 10; // automatically load snowfield 4 for testing
     } else if (Sequence_Step==6){                                                     // Sequence: World Map
+        if (Stage_Status[1] > Unlocked) Prologue = false;
+        if (!Prologue) ChangeBGM(mus_restarea);
         WorldMap.MAPmain();
         drawUI(2);
     } else if (Sequence_Step==7){                 // Sequence: Title card lore
-        largeMessage(Large_Text,DIRE_Win_Center,96,"Story:",204,148,73,0xFF,100,0,0,0xFF,16,24);                                   
-        textBox(Large_Text,DIRE_Win_Center,180,"The monsters have stolen all of the candy.",0xCC9449,0x640000);
-        textBox(Large_Text,DIRE_Win_Center,192,"Go beat them up and get it back!",0xCC9449,0x640000);
-        if (Clicked){
-            Sequence_Step = 6;
+        dispItemCentered(Eclipse_Img,DIRE_Win_Center,100,96,72,0,0,96,72,0xFFFFFFFF);                                 
+        textBox(Large_Text,DIRE_Win_Center,180,"The Eclipse is returning after 5,000,000 years",0x9449CC,0x640064);
+        textBox(Large_Text,DIRE_Win_Center,192,"                 of dormancy.",0x9449CC,0x640064);
+        textBox(Large_Text,DIRE_Win_Center,216,"Surely calamity will occur if you don't stop it!",0x9449CC,0x640064);
+        screenTransition(0xFF - floor(0xFF*Sequence_Timer/240));
+        if (Sequence_Timer < 240 && Sequence_Timer != -1) Sequence_Timer++;
+        if (Clicked && Sequence_Timer >= 120){
+            Current_Screen = 0;
+            Prologue = true;
+            Current_Stage = 1;
+            Sequence_Step = 10;
         }
     }
 }
@@ -2118,12 +2256,23 @@ function PvEscreens(){ // original name: vf()
     var static_left,static_middle,static_right,group_pos,group_en_type,group_count,en_xpos,en_ypos;
     var screen_intro_text1 = "";
 
-    if (Sequence_Step==10){                                                           // Sequence: load PvE screen
-        if (Terrain.TRset(Current_Stage)){
-            Players.PLspawn(0,0,Terrain.TR_low_dry_surface[0]);
-            Players.PLspawn(1,1,Terrain.TR_low_dry_surface[1]);
-            Players.PLspawn(2,2,Terrain.TR_low_dry_surface[2]);
-            Players.PLspawn(3,3,Terrain.TR_low_dry_surface[3]);
+    if (Sequence_Step==10){                
+        if (Sequence_Timer != -1) {
+            drawUI(0);
+            Sequence_Timer = -1;      
+        }                                     // Sequence: load PvE screen
+        else if (Terrain.TRset(Current_Stage)){
+            if (Current_Stage == 1 && Current_Screen == 0) {
+                Players.PLspawn(0,16,Terrain.TR_low_dry_surface[16]);
+                Players.PLspawn(1,19,Terrain.TR_low_dry_surface[19]);
+                Players.PLspawn(2,22,Terrain.TR_low_dry_surface[22]);
+                Players.PLspawn(3,25,Terrain.TR_low_dry_surface[25]);
+            } else {
+                Players.PLspawn(0,0,Terrain.TR_low_dry_surface[0]);
+                Players.PLspawn(1,1,Terrain.TR_low_dry_surface[1]);
+                Players.PLspawn(2,2,Terrain.TR_low_dry_surface[2]);
+                Players.PLspawn(3,3,Terrain.TR_low_dry_surface[3]);
+            }
             Enemies.ENreset(1);
 
             Enemy_Spawn_Scale = 100;
@@ -2157,7 +2306,7 @@ function PvEscreens(){ // original name: vf()
                         en_xpos = floor(randomRange((Win_Width>>5)+12,(Win_Width>>4)+12));
                         en_ypos = fiftyfifty(Terrain.TR_low_dry_surface[en_xpos],Terrain.TR_high_surface[en_xpos]);
                     } else if (group_pos==Ground_Right){
-                        en_xpos = floor(randomRange((Win_Width>>3)-4));
+                        en_xpos = floor(randomRange((Win_Width>>4)+12,(Win_Width>>3)-4));
                         en_ypos = fiftyfifty(Terrain.TR_low_dry_surface[en_xpos],Terrain.TR_high_surface[en_xpos]);
                     } else if (group_pos==Air_Water){
                         en_xpos = floor(randomRange(12,(Win_Width>>3)-4));
@@ -2187,7 +2336,7 @@ function PvEscreens(){ // original name: vf()
                     } else if (group_pos==Ceiling_Middle){
                         en_xpos = floor(randomRange((Win_Width>>5)+12,(Win_Width>>4)+12));
                         en_ypos = Terrain.TR_air_ceil[en_xpos];
-                    } else if (group_pos==Ceiling_Left){
+                    } else if (group_pos==Ceiling_Right){
                         en_xpos = floor(randomRange((Win_Width>>4)+12,(Win_Width>>3)-4));
                         en_ypos = Terrain.TR_air_ceil[en_xpos];
                     } else continue;
@@ -2203,6 +2352,7 @@ function PvEscreens(){ // original name: vf()
     } else if (Sequence_Step==11){                                                    // Sequence: fade in screen (including splash text for first screen and boss screen)
         drawStage(0);
         drawUI(0);
+        ChangeBGM(Stage_Songs[Current_Stage]);
         r = 30;
         screen_intro_text1 = "";
 
@@ -2212,11 +2362,12 @@ function PvEscreens(){ // original name: vf()
         } else if (Stage_Spawns[Current_Stage].length == Current_Screen+1){
             r = 110;
             screen_intro_text1 = "Boss Area";
+            ChangeBGM(mus_boss);
         }
 
         screenTransition(0xFF-floor(0xFF*(Text_Fade<30? Text_Fade :30)/30));
 
-        if (r==110){
+        if (!Prologue && r==110){
             b = 0xFF;
             if (Text_Fade<30)
                 b = floor(0xFF*Text_Fade/30);
@@ -2243,16 +2394,16 @@ function PvEscreens(){ // original name: vf()
             Sequence_Step = 30;
         } else if (Sign_Touched_Mode!=0){
             Sequence_Step++;
-        } else if (isMouseHovered(Win_Width-56-4-8-80-4,4,56,20)){
+        } else if (isMouseHovered(Win_Width-56-4-8-80-4 + 96*Prologue,4,56,20)){
             if (Clicked)
                 Sequence_Step = 20;
             else if (Arr256_1[32]) // spacebar
                 Sequence_Step = 20;
 
-            Large_Text.TXoutput(Win_Width-52-4-8-80-4,8,"Option",0xFF0000,0x000000); // options button (red highlight while in normal stages)
+            Large_Text.TXoutput(Win_Width-52-4-8-80-4 + 96*Prologue,8,"Option",0xFF0000,0x000000); // options button (red highlight while in normal stages)
         } else if (Arr256_1[32]){ // spacebar
             Sequence_Step = 20;
-        } else if (isMouseHovered(Win_Width-80-4,4,80,20)){
+        } else if (!Prologue && isMouseHovered(Win_Width-80-4,4,80,20)){
             if (Clicked)
                 Sequence_Step = 6;
             Large_Text.TXoutput(Win_Width-4-70-6,8,"World Map",0xFF0000,0x000000); // World Map button (red highlight while in normal stages)
@@ -2294,13 +2445,13 @@ function PvEscreens(){ // original name: vf()
         if ((Current_Stage==0 || Current_Stage==20 || Current_Stage==47 || Current_Stage==70 || Current_Stage==77) && Current_Screen==1)
             resume = 52;
 
-        if (isMouseHovered(Win_Width-56-4-8-80-4,4,56,20)){
+        if (isMouseHovered(Win_Width-56-4-8-80-4 + 96*Prologue,4,56,20)){
             if (Clicked)
                 Sequence_Step = resume;
             else if (Arr256_1[32]) // spacebar
                 Sequence_Step = resume;
 
-            Large_Text.TXoutput(Win_Width-52-4-8-80-4,8,"Option",0xFF0000,0x000000); // options button (red highlight while options window is open)
+            Large_Text.TXoutput(Win_Width-52-4-8-80-4 + 96*Prologue,8,"Option",0xFF0000,0x000000); // options button (red highlight while options window is open)
         } else if (Arr256_1[32]){ // spacebar
             Sequence_Step = resume;
         }
@@ -2424,6 +2575,7 @@ function townScreens(){ // original name: wf()
         Players.PLspawn(2,22,Terrain.TR_low_dry_surface[22]);
         Players.PLspawn(3,25,Terrain.TR_low_dry_surface[25]);
         Enemies.ENreset(1);
+        ChangeBGM(mus_restarea);
         Projectiles.PJ_index = 0;
         Indicators.IN_index = 0;
         Drops.DP_index = 0;
@@ -2531,7 +2683,7 @@ function townScreens(){ // original name: wf()
             }
         } else if (isMouseHoveredCenter(40,152,72,24)){
             if (Current_Stage==0)
-                textBox(Large_Text,40,152,"Shop",0xFF0000,0xD2953A);
+                textBox(Large_Text,40,152,"Shop/Forge",0xFF0000,0xD2953A);
             else if (Current_Stage==20)
                 textBox(Large_Text,40,152," Compo Shop",0xFF0000,0xD2953A);
             else if (Current_Stage==47)
@@ -2563,7 +2715,7 @@ function townScreens(){ // original name: wf()
         }
 
         var shop_tab = [
-            [3,4,5,6,12,14,15,18], // icons for shop tabs
+            [3,20,21], // icons for shop tabs
             [7,8,9,10,11,16,17],   // icons for compo shop tabs
             [3,4,5,6,12,14,15,18], // icons for resort tabs
             [7,8,9,10,11,16,17]    // icons for combo shop tabs
@@ -2578,9 +2730,16 @@ function townScreens(){ // original name: wf()
 
         if (isMouseHovered(shop_left+8,shop_top+4,16*shop_tab[town_stage].length,12)){
             b = (Mouse_Xpos-(shop_left+8))>>4;
-            if (Clicked){
+            if (Clicked){ // Tabs
+                PlaySoundInterrupt(snd_click, false);
+                
                 Item_Num = b;
-                Shop_Row = clamp(Shop_Row,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
+                if (shop_tab[town_stage][Item_Num] != 21) { 
+                    Shop_Row = clamp(Shop_Row,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
+                } else {
+                    Shop_Row = -1;
+                }
+                
             }
             drawButton(shop_left+8+16*b,shop_top+4,12,12,0x990000);
         }
@@ -2593,148 +2752,194 @@ function townScreens(){ // original name: wf()
         drawRect(shop_left+8+16*Item_Num-1,shop_top+4-1,14,14,0x990000);
         drawLine(shop_left+0,shop_top+20-1,shop_left+235,shop_top+20-1,0xFFFFFF);
 
-        if (isMouseHovered(shop_left+120,shop_top+24,84,84)){
-            b = floor((Mouse_Xpos-(shop_left+120))/28);
-            a = floor((Mouse_Ypos-(shop_top+24))/28);
-            if (Clicked){
-                Shop_Cell = 3*a+b;
-            }
-            drawButton(shop_left+120+28*b,shop_top+24+28*a,24,24,0x990000);
-        }
-
-        var item_cell = (3*Shop_Row+Shop_Cell) % Shop_Items[town_stage][Item_Num].length;
-        var shop_item = Shop_Items[town_stage][Item_Num][item_cell];
-        var latest_unlock = 1;
-
-        for (var s=0; s<Stage_Count; s++){
-            if ((Stage_Status[s]&Beaten)>0 && Shop_Reqs[s]>latest_unlock)
-                latest_unlock = Shop_Reqs[s];
-        }
-        if (Current_Stage==0 && item_cell>=latest_unlock)
-            shop_item = 0;
-        itemText(shop_left+8,shop_top+24,Item_Catalogue[shop_item][Item_Name]+" "+(Item_Catalogue[shop_item][Item_LV]? Item_Catalogue[shop_item][Item_LV] :""),-1,0x282828,-2);
-        itemText(shop_left+8,shop_top+24,Item_Catalogue[shop_item][Item_Name]+" "+(Item_Catalogue[shop_item][Item_LV]? Item_Catalogue[shop_item][Item_LV] :""),0xFFFFFF,-1,-2);
-        UI_weapClass = getVal(shop_item,Item_Class_ID);
-        if (UI_weapClass==Class_Compo){
-            Large_Text.TXoutput(shop_left+8,shop_top+40,"Compo Item",-1,0x505050);
-            itemText(shop_left+8,shop_top+56,Item_Catalogue[shop_item][Compo_Desc_1],-1,0x282828,-2);
-            itemText(shop_left+8,shop_top+56,Item_Catalogue[shop_item][Compo_Desc_1],0xFFFFFF,-1,-2);
-            itemText(shop_left+8,shop_top+68,Item_Catalogue[shop_item][Compo_Desc_2],-1,0x282828,-2);
-            itemText(shop_left+8,shop_top+68,Item_Catalogue[shop_item][Compo_Desc_2],0xFFFFFF,-1,-2);
-        } else {
-            Large_Text.TXoutput(shop_left+8,shop_top+40,"AT "+Item_Catalogue[shop_item][Item_AT_Min]+"-"+Item_Catalogue[shop_item][Item_AT_Max],0xFFFFFF,0x000000);
-            Large_Text.TXoutput(shop_left+8,shop_top+52,"AGI "+Item_Catalogue[shop_item][Weap_AGI_Min]+"-"+Item_Catalogue[shop_item][Weap_AGI_Max],0xFFFFFF,0x000000);
-            Large_Text.TXoutput(shop_left+8,shop_top+64,"Range "+Item_Catalogue[shop_item][Weap_Range],0xFFFFFF,0x000000);
-
-            var type = getVal(shop_item,Item_Type);
-            var type_para = getVal(shop_item,Item_Type_Para);
-            var MP_price = maxOf(getVal(shop_item,Weap_MP_Price),0);
-            var BAT_min = getVal(shop_item,Item_BAT_Min);
-            var BAT_max = getVal(shop_item,Item_BAT_Max);
-
-            // color type (shop UI)
-            var TYPE = "";
-            var type_color = 0xFFFFFF; // white
-            var physical = 0x959595;   // gray
-            var fire = 0xFF3333;       // red
-            var ice = 0x6C6CCB;        // blue
-            var thunder = 0xEDED00;    // yellow
-            var poison = 0x00FE00;     // green
-            var freeze = 0xCBCBFE;     // light blue
-
-            switch (type){
-                case 0: TYPE = "Physical", type_color = physical; break;
-                case 1: TYPE = "Fire", type_color = fire; break;
-                case 2: TYPE = "Ice", type_color = ice; break;
-                case 3: TYPE = "Thunder", type_color = thunder; break;
-                case 4: TYPE = "Poison", type_color = poison; break;
-                case 5: TYPE = "Freeze", type_color = freeze; break;
-            }
-            Large_Text.TXoutput(shop_left+8,shop_top+80,"Type: "+TYPE,type_color,0x000000);
-            Large_Text.TXoutput(shop_left+8,shop_top+92,"AT "+BAT_min+"-"+BAT_max,type_color,0x000000);
-
-            if (UI_weapClass==6)
-                Large_Text.TXoutput(shop_left+8,shop_top+104,"$$ "+MP_price,0xFFFFFF,0x000000); // if weapon is a gun, display "$$" instead of "MP"
-            else if (MP_price>0)
-                Large_Text.TXoutput(shop_left+8,shop_top+104,"MP "+MP_price,0xFFFFFF,0x000000); // only display MP if there is a MP cost
-
-            if (type==1 || type==4 || type==5){
-                if (type==1){
-                    if (getVal(shop_item,Item_Res_Mode)!=0) // if there IS a residue mode, fire time = residue lifespan
-                         type_para = getVal(shop_item,Res_Lifespan);
-                    else type_para = getVal(shop_item,Proj_Lifespan); // if there is NOT a residue mode, fire time = projectile lifespan
+        if (Shop_Row != -1) { // Regular shop screen
+            if (isMouseHovered(shop_left+120,shop_top+24,84,84)){ // Items
+                b = floor((Mouse_Xpos-(shop_left+120))/28);
+                a = floor((Mouse_Ypos-(shop_top+24))/28);
+                if (Clicked){
+                    PlaySoundInterrupt(snd_click, false);
+                    Shop_Cell = 3*a+b;
                 }
-                Large_Text.TXoutput(shop_left+8,shop_top+116,"Time "+type_para/50+"s",type_color,0x000000); // display fire, poison, and freeze durations
-            } else if (type==2){
-                Large_Text.TXoutput(shop_left+8,shop_top+116,"Slow "+type_para+"%",type_color,0x000000); // display slow %
+                drawButton(shop_left+120+28*b,shop_top+24+28*a,24,24,0x990000);
             }
-        }
-        for (var i=0; i<9; i++){
-            r = (3*Shop_Row+i) % Shop_Items[town_stage][Item_Num].length;
-            if (Current_Stage!=0 || latest_unlock>r){
-                Display_Mode2 = 2;
-                dispItem(Item_Img,shop_left+120+i%3*28,shop_top+24+28*floor(i/3),24,24,24*getVal(Shop_Items[town_stage][Item_Num][r],Item_Ico_Big),0,24,24,getVal(Shop_Items[town_stage][Item_Num][r],Item_Color)); // icon of item in shop
-                Display_Mode2 = 0;
 
-                if (Item_Catalogue[Shop_Items[town_stage][Item_Num][r]][Item_LV])
-                    Small_Text.TXoutput(shop_left+120+i%3*28+19,shop_top+24+28*floor(i/3)+17,""+Item_Catalogue[Shop_Items[town_stage][Item_Num][r]][Item_LV],0xFFFFFF,-1); // tier number next to item in shop
+            var item_cell = (3*Shop_Row+Shop_Cell) % Shop_Items[town_stage][Item_Num].length;
+            var shop_item = Shop_Items[town_stage][Item_Num][item_cell];
+            var latest_unlock = 56;
+            
+            /*
+            for (var s=0; s<Stage_Count; s++){
+                if ((Stage_Status[s]&Beaten)>0 && Shop_Reqs[s]>latest_unlock)
+                    latest_unlock = Shop_Reqs[s];
             }
-        }
-        drawRect(shop_left+120+Shop_Cell%3*28,shop_top+24+28*floor(Shop_Cell/3),24,24,0x990000);
-        buy_price = getVal(shop_item,Item_Buy_Price);
-        if (town_stage==2 && item_cell==1)
-            buy_price *= 10;
-        if (isMouseHovered(shop_left+176-56,shop_top+120-10,108,20)){
-            if (shop_item!=0 && Team_Gold>=buy_price && Clicked){
-                antiCheatCheck();
-                var second_slot = 0;
-                if (town_stage==0 || town_stage==2 && item_cell==0)
-                    second_slot = Null_Slot;
-                Drops.DPadd(40,200,shop_item,0,second_slot);
-                Team_Gold -= buy_price;
-                antiCheatSet();
+            */
+            if (Current_Stage==0 && item_cell>=latest_unlock)
+                shop_item = 0;
+            itemText(shop_left+8,shop_top+24,Item_Catalogue[shop_item][Item_Name]+" "+(Item_Catalogue[shop_item][Item_LV]? Item_Catalogue[shop_item][Item_LV] :""),-1,0x282828,-2);
+            itemText(shop_left+8,shop_top+24,Item_Catalogue[shop_item][Item_Name]+" "+(Item_Catalogue[shop_item][Item_LV]? Item_Catalogue[shop_item][Item_LV] :""),0xFFFFFF,-1,-2);
+            UI_weapClass = getVal(shop_item,Item_Class_ID);
+            if (UI_weapClass==Class_Compo){
+                Large_Text.TXoutput(shop_left+8,shop_top+40,"Compo Item",-1,0x505050);
+                itemText(shop_left+8,shop_top+56,Item_Catalogue[shop_item][Compo_Desc_1],-1,0x282828,-2);
+                itemText(shop_left+8,shop_top+56,Item_Catalogue[shop_item][Compo_Desc_1],0xFFFFFF,-1,-2);
+                itemText(shop_left+8,shop_top+68,Item_Catalogue[shop_item][Compo_Desc_2],-1,0x282828,-2);
+                itemText(shop_left+8,shop_top+68,Item_Catalogue[shop_item][Compo_Desc_2],0xFFFFFF,-1,-2);
+            } else {
+                Large_Text.TXoutput(shop_left+8,shop_top+40,"AT "+Item_Catalogue[shop_item][Item_AT_Min]+"-"+Item_Catalogue[shop_item][Item_AT_Max],0xFFFFFF,0x000000);
+                Large_Text.TXoutput(shop_left+8,shop_top+52,"AGI "+Item_Catalogue[shop_item][Weap_AGI_Min]+"-"+Item_Catalogue[shop_item][Weap_AGI_Max],0xFFFFFF,0x000000);
+                Large_Text.TXoutput(shop_left+8,shop_top+64,"Range "+Item_Catalogue[shop_item][Weap_Range],0xFFFFFF,0x000000);
+
+                var type = getVal(shop_item,Item_Type);
+                var type_para = getVal(shop_item,Item_Type_Para);
+                var priest_buff = getVal(shop_item,Priest_Buff);
+                var MP_price = maxOf(getVal(shop_item,Weap_MP_Price),0);
+                var BAT_min = getVal(shop_item,Item_BAT_Min);
+                var BAT_max = getVal(shop_item,Item_BAT_Max);
+
+                // color type (shop UI)
+                var TYPE = "";
+                var type_color = 0xFFFFFF; // white
+                var physical = 0x959595;   // gray
+                var fire = 0xFF3333;       // red
+                var ice = 0x6C6CCB;        // blue
+                var thunder = 0xEDED00;    // yellow
+                var poison = 0x00FE00;     // green
+                var freeze = 0xCBCBFE;     // light blue
+
+                switch (type){
+                    case 0: TYPE = "Physical", type_color = physical; break;
+                    case 1: TYPE = "Fire", type_color = fire; break;
+                    case 2: TYPE = "Ice", type_color = ice; break;
+                    case 3: TYPE = "Thunder", type_color = thunder; break;
+                    case 4: TYPE = "Poison", type_color = poison; break;
+                    case 5: TYPE = "Freeze", type_color = freeze; break;
+                }
+                Large_Text.TXoutput(shop_left+8,shop_top+80,"Type: "+TYPE,type_color,0x000000);
+                Large_Text.TXoutput(shop_left+8,shop_top+92,"AT "+BAT_min+"-"+BAT_max,type_color,0x000000);
+
+                if (UI_weapClass==6)
+                    Large_Text.TXoutput(shop_left+8,shop_top+104, Math.ceil(100/MP_price) + " round(s)",0xFFFFFF,0x000000); // if weapon is a gun, display "rounds" instead of "MP"
+                else if (MP_price>0)
+                    Large_Text.TXoutput(shop_left+8,shop_top+104,"MP "+MP_price,0xFFFFFF,0x000000); // only display MP if there is a MP cost
+                if (UI_weapClass==5) { //preist
+                    var buffEffect = "None";
+                    switch (priest_buff) {
+                        case 0: buffEffect = "+5 DEX"
+                            break;
+                        case 1: buffEffect = "+2 Regen"
+                            break;
+                        case 2: buffEffect = "+5 STR"
+                            break;
+                        case 3: buffEffect = "+10% Dodge"
+                            break;
+                        case 4: buffEffect = "+5 MAG"
+                            break;
+                    }
+                    Large_Text.TXoutput(shop_left+8,shop_top+120,buffEffect,0xFF00FF,0x000000); // display fire, poison, and freeze durations
+                }
+
+                if (type==1 || type==4 || type==5){
+                    if (type==1){
+                        Large_Text.TXoutput(shop_left+8,shop_top+116,indent_space+"Burn "+ getVal(shop_item,type_parameter)/10+"%",type_color,0x000000); // display burn %
+                        if (getVal(shop_item,Item_Res_Mode)!=0) // if there IS a residue mode, fire time = residue lifespan
+                            type_para = getVal(shop_item,Res_Lifespan);
+                        else type_para = getVal(shop_item,Proj_Lifespan); // if there is NOT a residue mode, fire time = projectile lifespan
+                    }
+                    Large_Text.TXoutput(shop_left+8,shop_top+116,"Time "+type_para/50+"s",type_color,0x000000); // display fire, poison, and freeze durations
+                } else if (type==2){
+                    Large_Text.TXoutput(shop_left+8,shop_top+116,"Slow "+type_para+"%",type_color,0x000000); // display slow %
+                }
             }
-            drawButton(shop_left+176-56,shop_top+120-10,108,20,0x990000);
+            for (var i=0; i<9; i++){
+                r = (3*Shop_Row+i) % Shop_Items[town_stage][Item_Num].length;
+                if (Current_Stage!=0 || latest_unlock>r){
+                    Display_Mode2 = 2;
+                    dispItem(Item_Img,shop_left+120+i%3*28,shop_top+24+28*floor(i/3),24,24,24*getVal(Shop_Items[town_stage][Item_Num][r],Item_Ico_Big),0,24,24,getVal(Shop_Items[town_stage][Item_Num][r],Item_Color)); // icon of item in shop
+                    Display_Mode2 = 0;
+
+                    if (Item_Catalogue[Shop_Items[town_stage][Item_Num][r]][Item_LV])
+                        Small_Text.TXoutput(shop_left+120+i%3*28+19,shop_top+24+28*floor(i/3)+17,""+Item_Catalogue[Shop_Items[town_stage][Item_Num][r]][Item_LV],0xFFFFFF,-1); // tier number next to item in shop
+                }
+            }
+            drawRect(shop_left+120+Shop_Cell%3*28,shop_top+24+28*floor(Shop_Cell/3),24,24,0x990000);
+            buy_price = getVal(shop_item,Item_Buy_Price);
+            if (town_stage==2 && item_cell==1)
+                buy_price *= 10;
+            if (isMouseHovered(shop_left+176-56,shop_top+120-10,108,20)){
+                if (shop_item!=0 && Team_Gold>=buy_price && Clicked){
+                    antiCheatCheck();
+                    PlaySoundInterrupt(snd_cashregister, false);
+                    var second_slot = 0;
+                    if (town_stage==0 || town_stage==2 && item_cell==0)
+                        second_slot = Null_Slot;
+                    Drops.DPadd(40,200,shop_item,0,second_slot);
+                    Team_Gold -= buy_price;
+                    antiCheatSet();
+                }
+                drawButton(shop_left+176-56,shop_top+120-10,108,20,0x990000);
+            }
+            textBox(Large_Text,shop_left+176,shop_top+120,"$"+buy_price+" Buy",0xFFFFFF,0x000000);
+            drawRect(shop_left+176-56,shop_top+120-10,108,20,0x990000);
+            if (town_stage > 0) {
+                var arrow_color = 0xFFFFFF;
+
+                if (isMouseHovered(shop_left+216-12,shop_top+36-12,24,24)){
+                    if (Clicked)
+                        Shop_Row = cycle(Shop_Row-1,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
+                    arrow_color = 0x990000; // up arrow when hoving over
+                }
+
+                drawRect(shop_left+216-12,shop_top+36-12,24,24,0xFFFFFF);
+                drawButton(shop_left+216-1,shop_top+36-8,2,2,arrow_color);
+                drawButton(shop_left+216-2,shop_top+36-6,4,2,arrow_color);
+                drawButton(shop_left+216-3,shop_top+36-4,6,2,arrow_color);
+                drawButton(shop_left+216-4,shop_top+36-2,8,2,arrow_color);
+                drawButton(shop_left+216-5,shop_top+36+0,10,2,arrow_color);
+                drawButton(shop_left+216-6,shop_top+36+2,12,2,arrow_color);
+                drawButton(shop_left+216-7,shop_top+36+4,14,2,arrow_color);
+                drawButton(shop_left+216-8,shop_top+36+6,16,2,arrow_color);
+                arrow_color = 0xFFFFFF; // down arrow in shop
+
+                if (isMouseHovered(shop_left+216-12,shop_top+92-12,24,24)){
+                    if (Clicked)
+                        Shop_Row = cycle(Shop_Row+1,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
+                    arrow_color = 0x990000; // down arrow when hoving over
+                }
+
+                drawRect(shop_left+216-12,shop_top+92-12,24,24,0xFFFFFF);
+                drawButton(shop_left+216-8,shop_top+92-8,16,2,arrow_color);
+                drawButton(shop_left+216-7,shop_top+92-6,14,2,arrow_color);
+                drawButton(shop_left+216-6,shop_top+92-4,12,2,arrow_color);
+                drawButton(shop_left+216-5,shop_top+92-2,10,2,arrow_color);
+                drawButton(shop_left+216-4,shop_top+92+0,8,2,arrow_color);
+                drawButton(shop_left+216-3,shop_top+92+2,6,2,arrow_color);
+                drawButton(shop_left+216-2,shop_top+92+4,4,2,arrow_color);
+                drawButton(shop_left+216-1,shop_top+92+6,2,2,arrow_color);
+            }
+
+        } else { // Forge screen
+            Forge_Mode = 1;
+            
+            itemText(shop_left+8,shop_top+24,"Forge",-1,0x282828,-2);
+            itemText(shop_left+8,shop_top+24,"Forge",0xFFFFFF,-1,-2);
+            Large_Text.TXoutput(shop_left+8,shop_top+40,"Augment Item",-1,0x505050);
+            
+            if (!(Held_Item == 0 || Augment_Cost == 0)) {
+                Large_Text.TXoutput(shop_left+64,shop_top+80,"Augment Cost",0xFFFFFF,0x000000);
+                Large_Text.TXoutput(shop_left+96 - Augment_Cost.toString().length*4,shop_top+92,"$" + Augment_Cost + " Forge",0xFFFFFF,0x000000);
+            } else {
+                Large_Text.TXoutput(shop_left+8,shop_top+80,"Click on a weapon while",0xFFFFFF,0x000000);
+                Large_Text.TXoutput(shop_left+8,shop_top+92,"holding the appropriate item",0xFFFFFF,0x000000);
+                Large_Text.TXoutput(shop_left+8,shop_top+104,"to augment it.",0xFFFFFF,0x000000);
+            }
+            
+
+
+            // Recipe checker
         }
-        textBox(Large_Text,shop_left+176,shop_top+120,"$"+buy_price+" Buy",0xFFFFFF,0x000000);
-        drawRect(shop_left+176-56,shop_top+120-10,108,20,0x990000);
-        var arrow_color = 0xFFFFFF;
-
-        if (isMouseHovered(shop_left+216-12,shop_top+36-12,24,24)){
-            if (Clicked)
-                Shop_Row = cycle(Shop_Row-1,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
-            arrow_color = 0x990000; // up arrow when hoving over
-        }
-
-        drawRect(shop_left+216-12,shop_top+36-12,24,24,0xFFFFFF);
-        drawButton(shop_left+216-1,shop_top+36-8,2,2,arrow_color);
-        drawButton(shop_left+216-2,shop_top+36-6,4,2,arrow_color);
-        drawButton(shop_left+216-3,shop_top+36-4,6,2,arrow_color);
-        drawButton(shop_left+216-4,shop_top+36-2,8,2,arrow_color);
-        drawButton(shop_left+216-5,shop_top+36+0,10,2,arrow_color);
-        drawButton(shop_left+216-6,shop_top+36+2,12,2,arrow_color);
-        drawButton(shop_left+216-7,shop_top+36+4,14,2,arrow_color);
-        drawButton(shop_left+216-8,shop_top+36+6,16,2,arrow_color);
-        arrow_color = 0xFFFFFF; // down arrow in shop
-
-        if (isMouseHovered(shop_left+216-12,shop_top+92-12,24,24)){
-            if (Clicked)
-                Shop_Row = cycle(Shop_Row+1,0,floor(Shop_Items[town_stage][Item_Num].length/3)-1);
-            arrow_color = 0x990000; // down arrow when hoving over
-        }
-
-        drawRect(shop_left+216-12,shop_top+92-12,24,24,0xFFFFFF);
-        drawButton(shop_left+216-8,shop_top+92-8,16,2,arrow_color);
-        drawButton(shop_left+216-7,shop_top+92-6,14,2,arrow_color);
-        drawButton(shop_left+216-6,shop_top+92-4,12,2,arrow_color);
-        drawButton(shop_left+216-5,shop_top+92-2,10,2,arrow_color);
-        drawButton(shop_left+216-4,shop_top+92+0,8,2,arrow_color);
-        drawButton(shop_left+216-3,shop_top+92+2,6,2,arrow_color);
-        drawButton(shop_left+216-2,shop_top+92+4,4,2,arrow_color);
-        drawButton(shop_left+216-1,shop_top+92+6,2,2,arrow_color);
+        // Click to sell
         drawLine(shop_left+0,shop_top+136-1,shop_left+235,shop_top+136-1,0xFFFFFF);
         drawLine(shop_left+120,shop_top+136-1,shop_left+120,shop_top+160,0xFFFFFF);
-
         if (isMouseHovered(shop_left+0+1,shop_top+136,120,24) && Held_Item!=0){ // hovering over click/drag to sell with something held
             var sell_price = getVal(Held_Item,Item_Buy_Price)>>3;
             if (Clicked){                                                // sell held item
@@ -2753,8 +2958,10 @@ function townScreens(){ // original name: wf()
             drawButton(shop_left+0+1,shop_top+136,119,24,0x990000);
             textBox(Large_Text,shop_left+60,shop_top+148,"Click to sell",0xFFFFFF,0x000000);
         } else if (isMouseHovered(shop_left+0+1,shop_top+136,120,24) && Held_Item==0 && Click_To_Sell_Mode==1){ // hovering over cancel
-            if (Clicked)
+            if (Clicked) {
                 Click_To_Sell_Mode = 0;
+                Forge_Mode = 0;
+            }
             drawButton(shop_left+0+1,shop_top+136,119,24,0x990000);
             textBox(Large_Text,shop_left+60,shop_top+148,"Cancel",0xFFFFFF,0x000000);
         } else if (Click_To_Sell_Mode==1){                                                // in click to sell mode
@@ -2765,6 +2972,7 @@ function townScreens(){ // original name: wf()
         if (isMouseHovered(shop_left+120+1,shop_top+136,114,24)){
             if (Clicked){
                 Click_To_Sell_Mode = 0;
+                Forge_Mode = 0;
                 Sequence_Step = 52;
             }
             drawButton(shop_left+120+1,shop_top+136,114,24,0x990000);
@@ -2901,8 +3109,8 @@ function townScreens(){ // original name: wf()
                     Small_Text.TXoutput(book_left+256,book_top+92+2,"          Fr",0xC0C0FF,0x000000);
 
             } else if ((Stage_Status[book_stage]&Beaten) > 0){ // book cost
-                textBox(Large_Text,book_left+240,book_top+40,"Information Fee",0xFFFFFF,0x000000);
-                entry_cost = 1000*(Item_Num+Shop_Row+1);
+                textBox(Large_Text,book_left+240,book_top+40,"Information is free!",0xFFFFFF,0x000000);
+                entry_cost = 0*(Item_Num+Shop_Row+1);
                 if (isMouseHoveredCenter(book_left+240,book_top+80,160,160)){
                     if (Team_Gold>=entry_cost && Clicked){
                         antiCheatCheck();
@@ -2912,7 +3120,7 @@ function townScreens(){ // original name: wf()
                     }
                     fillColor(book_left+240,book_top+80,120,32,0x990000); // highlights button when mouse hovers over information fee
                 }
-                textBox(Large_Text,book_left+240,book_top+80,"$"+entry_cost+" Buy",0xFFFFFF,0x000000);
+                textBox(Large_Text,book_left+240,book_top+80,"Read",0xFFFFFF,0x000000);
             } else {
                 textBox(Large_Text,book_left+240,book_top+40,"?????",0xFFFFFF,0x000000);
                 textBox(Large_Text,book_left+240,book_top+80,"???",0xFFFFFF,0x000000);
@@ -3265,7 +3473,8 @@ function PvPscreens(){ // original name: xf()
                 }
             }
         }
-        drawButton(0,257,512,126,[0xCC9449,0x90A8B0,0x6E8038,0xA7BFC9,0xAC7754,0x00600A,0x6F582D,0x6F582D,0x996600][Stage_Spawns[Current_Stage][Current_Screen][0]]);
+        //UI / HUD color
+        drawButton(0,257,512,126,[0xCC9449,0x90A8B0,0x6E8038,0xA7BFC9,0x445599,0x00600A,0x6F582D,0x6F582D,0x996600][Stage_Spawns[Current_Stage][Current_Screen][0]]);
         Small_Text.TXvsModeOutput(10,374,"(C) 2008 ha55ii DAN-BALL.jp",0,0,0,0,0,0,0,128,5,7);
         largeMessage(Large_Text,DIRE_Win_Center,328,"VS",0xFF,0xFF,0xFF,0xFF,0,0,0,0xFF,16,24);
         b = 40;
@@ -3318,7 +3527,7 @@ function drawStage(is_paused){ // original name: Tf()
         dispItemCentered(Hut_Img,40,170,156,112,0,0,78,56,0xFFFFFFFF); // hut for Shop
         textBox(Large_Text,400,168,"Inn",0xFFFFFF,0xD2953A); // white text at town type stages
         if (Current_Stage==0)
-            textBox(Large_Text,40,152,"Shop",0xFFFFFF,0xD2953A);
+            textBox(Large_Text,40,152,"Shop/Forge",0xFFFFFF,0xD2953A);
         else if (Current_Stage==20)
             textBox(Large_Text,40,152," Compo Shop",0xFFFFFF,0xD2953A);
         else if (Current_Stage==47)
@@ -3368,7 +3577,7 @@ function drawStage(is_paused){ // original name: Tf()
     var stage_effect_canvas = Game_Canvas;
     var color,r,g,b;
     switch (Terrain.TR_stage_num){
-        case 15:
+        case 3:
         case 16:
         case 30:
         case 31:
@@ -3401,8 +3610,8 @@ function drawStage(is_paused){ // original name: Tf()
             }
             Display_Mode = Display_Mode2 = 0;
             break;
-        case 17:
-        case 18:
+        case 1:
+        case 4:
         case 19:
         case 48:
         case 49:
@@ -3411,7 +3620,7 @@ function drawStage(is_paused){ // original name: Tf()
         case 84: // cavern dark effect
             Game_Canvas = Stage_Eff_Canvas.IG_pxl_color_index;
             for (var a=0; a<Win_Width*DIRE_Inv_Top; a++)
-                Game_Canvas[a] = 0xFF;
+                Game_Canvas[a] = 128;
 
             Display_Mode = Display_Mode2 = 3;
 
@@ -3444,6 +3653,7 @@ function drawStage(is_paused){ // original name: Tf()
 
                 if (color==0xFF){
                     Game_Canvas[x] = 0x0F000000;
+                    //Game_Canvas[x] = r<<4|g<<2|b;
                 } else {
                     stage_effect_canvas = Game_Canvas[x]>>16&0xFF;
                     r = (-stage_effect_canvas*color>>8)+stage_effect_canvas;
@@ -3557,26 +3767,32 @@ function drawStage(is_paused){ // original name: Tf()
     }
 
     Indicators.INoutput();
-    Display_Mode = 1;
-    drawButton(4,4,8*(Stage_Names[Current_Stage].length+6)+8,20,0x80404040);
+    if (!Prologue) {
+        Display_Mode = 1;
+        drawButton(4,4,8*(Stage_Names[Current_Stage].length+6)+8,20,0x80404040);
+    }
     Display_Mode = 0;
     // top left stage info UI
-    if (Current_Stage==0 || Current_Stage==20 || Current_Stage==47 || Current_Stage==70 || Current_Stage==77)
-        Large_Text.TXoutput(8,8,Stage_Names[Current_Stage],0xFFFFFF,0x000000);
-    else if(Current_Screen+1==Stage_Spawns[Current_Stage].length) // if this is the final screen
-        Large_Text.TXoutput(8,8,Stage_Names[Current_Stage]+": Boss",0xFFFFFF,0x000000);
-    else
-        Large_Text.TXoutput(8,8,Stage_Names[Current_Stage]+": "+(Current_Screen+1),0xFFFFFF,0x000000);
+    if (!Prologue) {
+        if (Current_Stage==0 || Current_Stage==20 || Current_Stage==47 || Current_Stage==70 || Current_Stage==77)
+            Large_Text.TXoutput(8,8,Stage_Names[Current_Stage],0xFFFFFF,0x000000);
+        else if(Current_Screen+1==Stage_Spawns[Current_Stage].length) // if this is the final screen
+            Large_Text.TXoutput(8,8,Stage_Names[Current_Stage]+": Boss",0xFFFFFF,0x000000);
+        else
+            Large_Text.TXoutput(8,8,Stage_Names[Current_Stage]+": "+(Current_Screen+1),0xFFFFFF,0x000000);
+    }
 
     Display_Mode = 1;
-    drawButton(Win_Width-56-4-8-80-4,4,56,20,0x80404040);
+    drawButton(Win_Width-56-4-8-80-4 + 96*Prologue,4,56,20,0x80404040);
     Display_Mode = 0;
-    Large_Text.TXoutput(Win_Width-52-4-8-80-4,8,"Option",0xFFFFFF,0x000000); // options button (white default text)
+    Large_Text.TXoutput(Win_Width-52-4-8-80-4 + 96*Prologue,8,"Option",0xFFFFFF,0x000000); // options button (white default text)
 
-    Display_Mode = 1;
-    drawButton(Win_Width-80-4,4,80,20,0x80404040);
-    Display_Mode = 0;
-    Large_Text.TXoutput(Win_Width-4-70-6,8,"World Map",0xFFFFFF,0x000000); // Word Map button (white default text)
+    if (!Prologue) {
+        Display_Mode = 1;
+        drawButton(Win_Width-80-4,4,80,20,0x80404040);
+        Display_Mode = 0;
+        Large_Text.TXoutput(Win_Width-4-70-6,8,"World Map",0xFFFFFF,0x000000); // Word Map button (white default text)
+    }
 
     if (En_Count_From_Max>0){
         if (is_paused==0)
@@ -3638,6 +3854,10 @@ function setRangersUI(){
             DEX[s] += getEff(Stickmen_Slots+s,Eff1),
             MAG[s] += getEff(Stickmen_Slots+s,Eff1);
         }
+        // add stats from auras
+        STR[s] += STR_Aura[s];
+        DEX[s] += DEX_Aura[s];
+        MAG[s] += MAG_Aura[s];
         var wATn = getVal(Item_Inv[Stickmen_Slots+s],Item_AT_Min);
         var wATx = getVal(Item_Inv[Stickmen_Slots+s],Item_AT_Max);
         var wAGIn = getVal(Item_Inv[Stickmen_Slots+s],Weap_AGI_Min);
@@ -3693,9 +3913,9 @@ function setRangersUI(){
             case 5: // priest
                 AT_Min[s] = wATn;                                      // Min AT
                 AT_Max[s] = wATx;                                      // Max AT
-                Agi_Min[s] = wAGIn;                                    // Min AGI
-                Agi_Max[s] = wAGIx;                                    // Max AGI
-                Range[s] = wRnge+2*MAG[s];                             // Range (from weapon and SP)
+                Agi_Min[s] = maxOf(wAGIn-DEX[s],50);                   // Min AGI
+                Agi_Max[s] = maxOf(wAGIx-DEX[s],60);                   // Max AGI
+                Range[s] = wRnge+2*STR[s];                             // Range (from weapon and SP)
                 if (checkEff(Stickmen_Slots+s,Card_Catapt))
                     Range[s] += getEff(Stickmen_Slots+s,Eff1);         // Range (from Catapult's Card)
                 LP_Max[s]=50+8*LP_SP[s]+2*STR[s]+2*DEX[s]+2*MAG[s];    // LP
@@ -3822,6 +4042,7 @@ function setRangersUI(){
         STR_Aura[s] = 0;
         DEX_Aura[s] = 0;
         MAG_Aura[s] = 0;
+        Dodge_Buff[s] = 0;
     }
     for (var s=0; s<team_last; s++){
         if (Team_List[s]==5 && getVal(Item_Inv[Stickmen_Slots+s],Item_Class_ID)==5 && LP_Current[s]!=0){
@@ -3833,9 +4054,44 @@ function setRangersUI(){
                     var ranger_Xpos = floor(Players.PL_joint[j][9].x+Players.PL_joint[j][10].x)>>1; // get position of the character (that could receive the aura)
                     var ranger_Ypos = floor(Players.PL_joint[j][9].y+Players.PL_joint[j][10].y)>>1;
                     if (absVal(aura_Xpos-ranger_Xpos) < Range[s] && absVal(aura_Ypos-ranger_Ypos) < Range[s]){ // check to see if character is in range of the aura
-                        STR_Aura[j] += STR[s];
-                        DEX_Aura[j] += DEX[s];
-                        MAG_Aura[j] += MAG[s];
+                        if (Reloading[s]) {
+                            switch (Status_Buff[s]) {
+                                case 0: //DEX
+                                    //STR_Aura[j] += 10;
+                                    DEX_Aura[j] += 10;
+                                    //MAG_Aura[j] += MAG[s];
+                                    break;
+                                case 1: //Heal
+                                    if (LP_Current[j]!=0 && (MP_Bar[s]%5 < 1/50)) {
+                                        LP_Current[j] = clamp(LP_Current[j]+2,0,LP_Max[j]);                         // increase LP
+                                        Indicators.INadd(Players.PL_joint[j][0].x,Players.PL_joint[j][0].y,0,2,0x00FF00); // output LP increase
+                                    }
+                                    break;
+                                case 2: //STR
+                                    STR_Aura[j] += 5;
+                                    //DEX_Aura[j] += 10;
+                                    //MAG_Aura[j] += MAG[s];
+                                    break;
+                                case 3: //Dodge
+                                    Dodge_Buff[j] += 5;
+                                    //DEX_Aura[j] += 10;
+                                    //MAG_Aura[j] += MAG[s];
+                                    break;
+                                case 4: //MAG
+                                    //STR_Aura[j] += 10;
+                                    //DEX_Aura[j] += 10;
+                                    MAG_Aura[j]   += 5;
+                                    break;
+                            }
+                            //Buff aura
+                            if (Sequence_Step != 40 && Sequence_Step != 6 && Status_Buff[s] > 0){
+                                Display_Mode = 2;
+                                Display_Mode2 = 1;
+                                color = maxOf(getVal(Item_Inv[Stickmen_Slots+s],Proj_Color),255); // aura color
+                                dispItemCentered(Effect_Img,floor(Players.PL_joint[j][9].x+Players.PL_joint[j][10].x)>>1,floor(Players.PL_joint[j][9].y+Players.PL_joint[j][10].y)>>1,20,12,12,0,20,12,color);
+                                Display_Mode = Display_Mode2 = 0;
+                            }
+                        }
                     }
                 }
             }
@@ -3843,7 +4099,7 @@ function setRangersUI(){
     }
     for (var s=0; s<team_last; s++){
         if (LP_Current[s]!=0 && checkEff(Stickmen_Slots+s,Card_Bersrk))
-            STR_Aura[s] += getEff(Stickmen_Slots+s,Eff1); // Berserk Card
+            Berserk_Aura[s] += getEff(Stickmen_Slots+s,Eff1); // Berserk Card
     }
     antiCheatSet();
 }
@@ -3921,7 +4177,7 @@ function drawUI(UI_mode){ // original name: Jf()
         Mouse_Up = true;
     else if (Left_Click_Is_Up && Mouse_Ypos<DIRE_Inv_Top)
         Mouse_Up = false;
-    drawButton(0,DIRE_Inv_Top+1,Win_Width,DIRE_Inv_Height-2,[0xCC9449,0x90A8B0,0x6E8038,0x747016,0xAC7754,0xCF8138,0xA7BFC9,0x607890,0x1D50AB,0x996600,0x667373,0x605550,0x605550][Stage_Spawns[Current_Stage][Current_Screen][0]]); // UI background
+    drawButton(0,DIRE_Inv_Top+1,Win_Width,DIRE_Inv_Height-2,[0xCC9449,0x90A8B0,0x6E8038,0x747016,0x445599,0xCF8138,0xA7BFC9,0x607890,0x1D50AB,0x996600,0x667373,0x605550,0x605550][Stage_Spawns[Current_Stage][Current_Screen][0]]); // UI background
     Small_Text.TXvsModeOutput(10,Win_Height-10,"(C) 2008 ha55ii DAN-BALL.jp",0,0,0,0,0,0,0,128,5,7);
     var L = 10; // left margin
     var T = DIRE_Inv_Top+4;
@@ -3941,6 +4197,7 @@ function drawUI(UI_mode){ // original name: Jf()
             STR_Aura[s] = 0;
             DEX_Aura[s] = 0;
             MAG_Aura[s] = 0;
+            //Dodge_Buff[s] = 0;
         }
         antiCheatSet();
     }
@@ -3949,21 +4206,33 @@ function drawUI(UI_mode){ // original name: Jf()
         Large_Text.TXoutput(L,T+16,"LP  "+LP_Current[Displayed_Object]+"/"+LP_Max[Displayed_Object],0xFFFFFF,0x000000);
 
         if (Players.PL_class_ID[Displayed_Object] != Class_Dead){
-            Large_Text.TXoutput(L,T+28  ,"STR "+STR[Displayed_Object],0xFFFFFF,0x000000);
-            Large_Text.TXoutput(L,T+40  ,"DEX "+DEX[Displayed_Object],0xFFFFFF,0x000000);
-            Large_Text.TXoutput(L,T+52  ,"MAG "+MAG[Displayed_Object],0xFFFFFF,0x000000);
+            var strColor = 0xFFFFFF;
+            var dexColor = 0xFFFFFF;
+            var magColor = 0xFFFFFF;
+            if (STR_Aura[Displayed_Object] > 0)
+                strColor = 0xFF8888;
+            if (DEX_Aura[Displayed_Object] > 0)
+                dexColor = 0x88FF88;
+            if (MAG_Aura[Displayed_Object] > 0)
+                magColor = 0x8888FF;
+            Large_Text.TXoutput(L,T+28  ,"STR "+STR[Displayed_Object],strColor,0x000000);
+            Large_Text.TXoutput(L,T+40  ,"DEX "+DEX[Displayed_Object],dexColor,0x000000);
+            Large_Text.TXoutput(L,T+52  ,"MAG "+MAG[Displayed_Object],magColor,0x000000);
             Small_Text.TXoutput(L,T+28+2,"              AT ",-1,0x000000);
             Small_Text.TXoutput(L,T+40+2,"              AGI ",-1,0x000000);
             Small_Text.TXoutput(L,T+52+2,"              RANGE ",-1,0x000000);
             Small_Text.TXoutput(L,T+28+2,"                 "+AT_Min[Displayed_Object]+"-"+AT_Max[Displayed_Object],0,-1);
             Small_Text.TXoutput(L,T+40+2,"                  "+Agi_Min[Displayed_Object]+"-"+Agi_Max[Displayed_Object],0,-1);
             Small_Text.TXoutput(L,T+52+2,"                    "+Range[Displayed_Object],0,-1);
-
+            
+            /*
             if (Team_List[Displayed_Object]==5){        // extra info for priests
                 Small_Text.TXoutput(L,T+64+2,"AURA          AURA",-1,0x000000);
                 Small_Text.TXoutput(L,T+64+2,"     (AT)"+STR[Displayed_Object]+"%",0,-1);
                 Small_Text.TXoutput(L,T+64+2,"                   (DF)"+DEX[Displayed_Object]/5,0,-1);
-            } else if (Team_List[Displayed_Object]==7){ // extra info for whippers
+                
+            } else*/ 
+            if (Team_List[Displayed_Object]==7){ // extra info for whippers
                 Small_Text.TXoutput(L,T+64+2,"              BULLET",-1,0x000000);
                 Small_Text.TXoutput(L,T+64+2,"                     +"+DEX[Displayed_Object]/5,0,-1);
             } else if (Team_List[Displayed_Object]==8){ // extra info for angels
@@ -4072,6 +4341,7 @@ function drawUI(UI_mode){ // original name: Jf()
 
                 var type = getVal(displayed_equipment,Item_Type);
                 var type_param = getVal(displayed_equipment,Item_Type_Para);
+                var priest_buff = getVal(displayed_equipment,Priest_Buff);
                 var MP_price = maxOf(getVal(displayed_equipment,Weap_MP_Price),0);
                 var bat_MIN = getVal(displayed_equipment,Item_BAT_Min);
                 var bat_MAX = getVal(displayed_equipment,Item_BAT_Max);
@@ -4124,14 +4394,32 @@ function drawUI(UI_mode){ // original name: Jf()
                 Large_Text.TXoutput(L,T+68,"AT "+bat_MIN+"-"+bat_MAX,type_color,0x000000);
 
                 if (item_class==6)
-                    Large_Text.TXoutput(L,T+80,"$$ "+MP_price,0xFFFF00,0x000000);
+                    Large_Text.TXoutput(L,T+80,Math.ceil(maxOf(100/MP_price, 1)) + " round(s)",0xFFFFFF,0x000000,0x88FFAA,0x000000);
                 else if (MP_price>0)
                     Large_Text.TXoutput(L,T+80,"MP "+MP_price,0x6666FF,0x000000);
 
-                if (item_class==4 || item_class==5)
-                    indent_space=""; // if weapon is an orb or a staff, do not add space for MP (because there is no MP cost)
+                if (item_class==4)
+                    indent_space=""; // if weapon is an orb, do not add space for MP (because there is no MP cost)
+                
+                if (item_class==5) { //preist
+                    var buffEffect = "None";
+                    switch (priest_buff) {
+                        case 0: buffEffect = "+5 DEX"
+                            break;
+                        case 1: buffEffect = "+2 Regen"
+                            break;
+                        case 2: buffEffect = "+5 STR"
+                            break;
+                        case 3: buffEffect = "+10% Dodge"
+                            break;
+                        case 4: buffEffect = "+5 MAG"
+                            break;
+                    }
+                    Large_Text.TXoutput(L,T+16,indent_space+buffEffect,0xFF00FF,0x000000); // display fire, poison, and freeze durations
+                }
 
                 if(type==1){
+                    Large_Text.TXoutput(L,T+68,"        "+"Burn "+ getVal(displayed_equipment,Item_Type_Para)/10+"%",type_color,0x000000); // display burn %
                     if (getVal(displayed_equipment,Item_Res_Mode)!=0) // if there IS a residue mode, fire time = residue lifespan
                          fire_duration = getVal(displayed_equipment,Res_Lifespan);
                     else fire_duration = getVal(displayed_equipment,Proj_Lifespan); // if there is NOT a residue mode, fire time = projectile lifespan
@@ -4169,8 +4457,23 @@ function drawUI(UI_mode){ // original name: Jf()
 
         MP_price = maxOf(getVal(Item_Inv[Stickmen_Slots+s],Weap_MP_Price),1);
         var item_class = getVal(Item_Inv[Stickmen_Slots+s],Item_Class_ID);
-        if (item_class!=4 && item_class!=5 && item_class!=6) // don't draw MP bar for non MP users
-            drawButton(L+32*s,T-6,floor(23*MP_Bar[s]/MP_price)+1,2,0x000080); // MP bar
+        var bar_color = 0x000080;
+        if (item_class != 0 && item_class!=4) // don't draw MP bar for non MP users
+            if (item_class==5) {
+                if (MP_Bar[s]/MP_price < 0.3) bar_color = 0x800000;
+                else if (MP_Bar[s]/MP_price < 1) bar_color = 0x9000A0;
+                else bar_color = 0xA844ff;
+                if (!Reloading[s]) bar_color = 0x000080;
+            }
+            else if (item_class==6) {
+                MP_price = 100;
+                if (MP_Bar[s]/MP_price < 0.3) bar_color = 0x800000;
+                else if (MP_Bar[s]/MP_price < 1) bar_color = 0x002288;
+                else bar_color = 0x00ff88;
+                if (Reloading[s]) bar_color = 0x444444;
+            }
+            //MP_price = Math.min(MP_price, 100);
+            if (MP_Bar[s]/MP_price <= 1) drawButton(L+32*s,T-6,floor(23*MP_Bar[s]/MP_price)+1,2,bar_color); // MP bar
         if (item_class==2 && getVal(Item_Inv[Stickmen_Slots+s],41)>50){ // output energy bar for activated swords
             var r = 255-floor(Players.PL_gladr_resid_count[s]/getVal(Item_Inv[Stickmen_Slots+s],41)*255);
             var b = floor(Players.PL_gladr_resid_count[s]/getVal(Item_Inv[Stickmen_Slots+s],41)*255);
@@ -4231,14 +4534,39 @@ function drawUI(UI_mode){ // original name: Jf()
         mouse_slot_pos = Inv_First+6*row+column;
         backgroundFill(L+28*column,T+28*row,24,24,0x800000);
     }
+    // Augment Cost
+    Augment_Cost = 0;
+    if (Forge_Mode == 1 && Held_Item != 0 && Item_Inv[mouse_slot_pos] != 0) {
+        for (var i = 0; i < Forge_Recipes.length; i++) {
+            if (Item_Inv[mouse_slot_pos] == Forge_Recipes[i][0] && Held_Item == Forge_Recipes[i][1]) {
+                Augment_Cost = (1.25)*(Item_Catalogue[Item_Inv[mouse_slot_pos]][2] + Item_Catalogue[Held_Item][2]);
+                break;
+            }
+        }
+    }
     antiCheatCheck();
+
+    // Inventory moving
     if (0<=mouse_slot_pos && mouse_slot_pos<Stickmen_Slots && Held_Item==0 && Clicked){
         Selected_Player = mouse_slot_pos;
     } else if (Stickmen_Slots<=mouse_slot_pos && mouse_slot_pos<Stickmen_Slots<<1 && Clicked){
-        if ((Held_Item==0 || Team_List[mouse_slot_pos-4]==getVal(Held_Item,Item_Class_ID)) && restrictSlots(mouse_slot_pos-4,0)){
+        if (Forge_Mode == 1 &&  Item_Inv[mouse_slot_pos]!=0 && Held_Item != 0) { // forging
+            for (var i = 0; i < Forge_Recipes.length; i++) {
+                if (Team_Gold>=Augment_Cost && Item_Inv[mouse_slot_pos] == Forge_Recipes[i][0] && Held_Item == Forge_Recipes[i][1]) {
+                    PlaySoundInterrupt(snd_levelup, false);
+                    Team_Gold -= Augment_Cost;
+                    Item_Inv[mouse_slot_pos] = Forge_Recipes[i][2];
+                    Held_Item = 0;
+                    break;
+                } else if (i == Forge_Recipes.length - 1) {
+                    PlaySoundSFX(snd_casherror, false);
+                }
+            }
+        } else if ((Held_Item==0 || Team_List[mouse_slot_pos-4]==getVal(Held_Item,Item_Class_ID)) && restrictSlots(mouse_slot_pos-4,0)){
             var proxy = Item_Inv[mouse_slot_pos];
             Item_Inv[mouse_slot_pos] = Held_Item;
             Held_Item = proxy;
+              //Team_List[item_pos] = held_item_class_ID; //Change classes but it doesn't work really
             proxy = Comp1_Inv[mouse_slot_pos];
             Comp1_Inv[mouse_slot_pos] = Comp1_Inv[Inv_Last];
             Comp1_Inv[Inv_Last] = proxy;
@@ -4247,6 +4575,7 @@ function drawUI(UI_mode){ // original name: Jf()
             Comp2_Inv[Inv_Last] = proxy;
             MP_Bar[mouse_slot_pos-4] = 0;
             Players.PL_gladr_resid_count[mouse_slot_pos-4] = 0;
+            PlaySoundSFX(snd_weapon, false);
         }
     } else if ((Stickmen_Slots<<1)<=mouse_slot_pos && mouse_slot_pos<Stickmen_Slots*3 && Clicked){ // compo row 1
         if (getVal(Held_Item,Item_Class_ID)==Class_Compo && restrictSlots(mouse_slot_pos-8,0)){
@@ -4255,6 +4584,7 @@ function drawUI(UI_mode){ // original name: Jf()
             Comp1_Inv[Inv_Last] = 0;
             Comp2_Inv[Inv_Last] = 0;
             MP_Bar[mouse_slot_pos-(Stickmen_Slots<<1)] = 0;
+            PlaySoundSFX(snd_compose, false);
         }
     } else if (Stickmen_Slots*3<=mouse_slot_pos && mouse_slot_pos<Stickmen_Slots*4 && Clicked){ // compo row 2
         if (getVal(Held_Item,Item_Class_ID)==Class_Compo && restrictSlots(mouse_slot_pos-12,1)){
@@ -4263,6 +4593,7 @@ function drawUI(UI_mode){ // original name: Jf()
             Comp1_Inv[Inv_Last] = 0;
             Comp2_Inv[Inv_Last] = 0;
             MP_Bar[mouse_slot_pos-Stickmen_Slots*3] = 0;
+            PlaySoundSFX(snd_compose, false);
         }
     } else if (Inv_First<=mouse_slot_pos && mouse_slot_pos<Inv_Last && Clicked){ // inventory
         if (Click_To_Sell_Mode==1 && Item_Inv[mouse_slot_pos]!=0){
@@ -4272,6 +4603,19 @@ function drawUI(UI_mode){ // original name: Jf()
                 Item_Inv[mouse_slot_pos] = 0;
                 Comp1_Inv[mouse_slot_pos] = 0;
                 Comp2_Inv[mouse_slot_pos] = 0;
+                PlaySoundSFX(snd_cashregister, false);
+            }
+        } else if (Forge_Mode == 1 &&  Item_Inv[mouse_slot_pos]!=0 && Held_Item != 0) { // Forge Mode
+            for (var i = 0; i < Forge_Recipes.length; i++) {
+                if (Team_Gold>=Augment_Cost && Item_Inv[mouse_slot_pos] == Forge_Recipes[i][0] && Held_Item == Forge_Recipes[i][1]) {
+                    PlaySoundInterrupt(snd_levelup, false);
+                    Team_Gold -= Augment_Cost;
+                    Item_Inv[mouse_slot_pos] = Forge_Recipes[i][2];
+                    Held_Item = 0;
+                    break;
+                } else if (i == Forge_Recipes.length - 1) {
+                    PlaySoundSFX(snd_casherror, false);
+                }
             }
         } else {
             UI_mode = Item_Inv[mouse_slot_pos];
@@ -4283,6 +4627,7 @@ function drawUI(UI_mode){ // original name: Jf()
             UI_mode = Comp2_Inv[mouse_slot_pos];
             Comp2_Inv[mouse_slot_pos] = Comp2_Inv[Inv_Last];
             Comp2_Inv[Inv_Last] = UI_mode;
+            PlaySoundSFX(snd_click3, false);
         }
     } else if (mouse_slot_pos==-1 && Held_Item!=0 && Clicked && Mouse_Ypos<DIRE_Inv_Top && UI_mode==0){ // drop item out of inventory
         Drops.DPadd(Players.PL_joint[Selected_Player][0].x,Players.PL_joint[Selected_Player][0].y,Held_Item,Comp1_Inv[Inv_Last],Comp2_Inv[Inv_Last]);
@@ -4609,7 +4954,6 @@ SR_Player.prototype.PLtakeDamage = function(splash,type,type_parameter,ATmin,ATm
     this.PL_dmg_dealt = 0;
     hitbox_width *= 0.5;
     hitbox_height *= 0.5;
-
     for (var s=team_leader; s<team_leader+Stickmen_Slots; s++){
         if (this.PL_class_ID[s]!=Class_Dead && !(this.PL_joint[s][2].x-5 > focus_Xpos+hitbox_width || this.PL_joint[s][2].x+5 < focus_Xpos-hitbox_width || this.PL_joint[s][2].y-10 > focus_Ypos+hitbox_height || this.PL_joint[s][2].y+10 < focus_Ypos-hitbox_height)){
             target_ID = -1;
@@ -4627,7 +4971,7 @@ SR_Player.prototype.PLtakeDamage = function(splash,type,type_parameter,ATmin,ATm
             var resist = false;
             switch (type) {
                 case 0: // physical attack
-                    pl_damage = maxOf(1,pl_damage-floor(DEX_Aura[s]/5)); break; // defense aura effect
+                    //pl_damage = maxOf(1,pl_damage-floor(DEX_Aura[s]/5)); break; // defense aura effect
                 case 1: // fire attack
                     if (checkEff(Stickmen_Slots+s,Card_Zombie))
                         mpl_damage += floor(pl_damage*getEff(Stickmen_Slots+s,Eff2)/100); break; // zombie's card weakness vs fire damage
@@ -4671,6 +5015,16 @@ SR_Player.prototype.PLtakeDamage = function(splash,type,type_parameter,ATmin,ATm
                 this.PL_damaged_ticks[s] = 0;
                 indicr_color = 0xFF8080; // color of 0 damage number (number when attack is blocked)
             }
+            if (Dodge_Buff[s] > 0 && random(100)<Dodge_Buff[s]){ // priest dodge buff
+                pl_damage = 0;
+                this.PL_damaged_ticks[s] = 0;
+                indicr_color = 0xAAA080; // color of 0 damage number (number when attack is blocked)
+            }
+            if (pl_damage != 0) {
+                PlaySoundSFX(snd_dmgplayer, false);
+            } else {
+                PlaySoundSFX(snd_atboxer, false);
+            }
             antiCheatCheck();
             LP_Current[s] = clamp(LP_Current[s]-pl_damage,0,LP_Max[s]);
             antiCheatSet();
@@ -4713,6 +5067,8 @@ SR_Player.prototype.PLsetHeldChar = function(){ // Pg.prototype.jb
         }
     }
 };
+
+
 
 // attack function for SR_Player original name: Pg.prototype.p
 SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_Ypos,target){
@@ -4812,8 +5168,9 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                 if (checkEff(Stickmen_Slots+source,Jewel_Diamond))
                     AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
 
-                AT_AT_min += floor(AT_AT_min*STR_Aura[source]/100);
-                AT_AT_max += floor(AT_AT_max*STR_Aura[source]/100);
+                AT_AT_min += floor(AT_AT_min*Berserk_Aura[source]/100);
+                AT_AT_max += floor(AT_AT_max*Berserk_Aura[source]/100);
+                
                 if (AT_weap_class_ID==7)
                     AT_weap_bullet += floor(DEX[source]/5);
                 break;
@@ -4862,8 +5219,8 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                 if (checkEff(Stickmen_Slots+source,Jewel_Diamond))
                     base_AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
 
-                AT_BATmin += floor(AT_BATmin*STR_Aura[source]/100);
-                AT_BATmax += floor(AT_BATmax*STR_Aura[source]/100);
+                AT_BATmin += floor(AT_BATmin*Berserk_Aura[source]/100);
+                AT_BATmax += floor(AT_BATmax*Berserk_Aura[source]/100);
                 if (checkEff(Stickmen_Slots+source,Card_Catapt) && getEff(Stickmen_Slots+source,Eff1)>random(100))
                     AT_pj_pierce = 1;
 
@@ -4873,11 +5230,18 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                 if (checkEff(Stickmen_Slots+source,Card_Explsn) && getEff(Stickmen_Slots+source,Eff1)>random(100))
                     AT_pj_splash = 1;
 
+                //Natural crit :hahayes:
+                if (2>random(100)){
+                    AT_AT_min += 2*AT_AT_min;
+                    AT_AT_max += 2*AT_AT_max;
+                    DIRE_crit_highlight = 1;
+                } else DIRE_crit_highlight = 0;
                 if (checkEff(Stickmen_Slots+source,Card_Critcl) && getEff(Stickmen_Slots+source,Eff1)>random(100)){
                     AT_AT_min += floor(getEff(Stickmen_Slots+source,Eff2)*AT_AT_min/100);
                     AT_AT_max += floor(getEff(Stickmen_Slots+source,Eff2)*AT_AT_max/100);
                     DIRE_crit_highlight = 1;
-                } break;
+                } 
+                 break;
 
             case 4: // Magician
             case 5: // Priest
@@ -4913,8 +5277,8 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                     AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
                     base_AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
                 }
-                AT_BATmin += floor(AT_BATmin*STR_Aura[source]/100);
-                AT_BATmax += floor(AT_BATmax*STR_Aura[source]/100);
+                AT_BATmin += floor(AT_BATmin*Berserk_Aura[source]/100);
+                AT_BATmax += floor(AT_BATmax*Berserk_Aura[source]/100);
                 if (checkEff(Stickmen_Slots+source,Card_Catapt) && getEff(Stickmen_Slots+source,Eff1)>random(100)){
                     AT_pj_pierce = 1;
                 }
@@ -4953,8 +5317,8 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                 if (checkEff(Stickmen_Slots+source,Jewel_Diamond))
                     base_AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
 
-                AT_BATmin += floor(AT_BATmin*STR_Aura[source]/100);
-                AT_BATmax += floor(AT_BATmax*STR_Aura[source]/100);
+                AT_BATmin += floor(AT_BATmin*Berserk_Aura[source]/100);
+                AT_BATmax += floor(AT_BATmax*Berserk_Aura[source]/100);
                 if (checkEff(Stickmen_Slots+source,Card_Catapt) && getEff(Stickmen_Slots+source,Eff1)>random(100))
                     AT_pj_pierce = 1;
 
@@ -5020,10 +5384,10 @@ SR_Player.prototype.PLprojectileAttack = function(source,AT_focus_Xpos,AT_focus_
                     AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
                     base_AT_bonus_type_param += getEff(Stickmen_Slots+source,Eff1);
                 }
-                AT_AT_min += floor(AT_AT_min*STR_Aura[source]/100);
-                AT_AT_max += floor(AT_AT_max*STR_Aura[source]/100);
-                AT_BATmin += floor(AT_BATmin*STR_Aura[source]/100);
-                AT_BATmax += floor(AT_BATmax*STR_Aura[source]/100);
+                AT_AT_min += floor(AT_AT_min*Berserk_Aura[source]/100);
+                AT_AT_max += floor(AT_AT_max*Berserk_Aura[source]/100);
+                AT_BATmin += floor(AT_BATmin*Berserk_Aura[source]/100);
+                AT_BATmax += floor(AT_BATmax*Berserk_Aura[source]/100);
                 break;
         }
         if (checkEff(Stickmen_Slots+source,Card_Bullet))
@@ -5965,6 +6329,7 @@ SR_Player.prototype.PLmain = function(){ // Pg.prototype.move
             }
             if (LP_Current[current_char]==0 && this.PL_class_ID[current_char]!=Class_Dead){
                 this.PL_class_ID[current_char] = Class_Dead;
+                PlaySoundSFX(snd_deathplayer, false);
                 for (var j=0; j<11; j++){
                     this.PL_joint[current_char][j].x += randomRange(-2,2);
                     this.PL_joint[current_char][j].y += randomRange(-1,-3);
@@ -5983,6 +6348,38 @@ SR_Player.prototype.PLmain = function(){ // Pg.prototype.move
             if (this.PL_held_player==current_char && Game_Mode!=1){
                 this.PL_joint[this.PL_held_player][this.PL_held_joint].x += (Mouse_Xpos-this.PL_joint[this.PL_held_player][this.PL_held_joint].x)*(LP_Current[current_char]==0? 0.04 :0.2);
                 this.PL_joint[this.PL_held_player][this.PL_held_joint].y += (Mouse_Ypos-this.PL_joint[this.PL_held_player][this.PL_held_joint].y)*(LP_Current[current_char]==0? 0.04 :0.2);
+            }
+
+             // Dodge rolling (test)
+             // Cooldown
+            if (Dodge_Cooldown > 0) Dodge_Cooldown--;
+            if (Dodge_Unlocked) {
+                if (Left_Click_Is_Up){ // if mouse button is released, dodge
+                    if (Dodge_Cooldown <= -50) {
+                        for (var s=0; s<Stickman_Count; s++){
+                            // Get angle
+                            var mouseAngle = new Vector2D();
+                            assignVector2D(mouseAngle,Mouse_Xpos-this.PL_joint[s][0].x,Mouse_Ypos-this.PL_joint[s][0].y);
+                            Normalize(mouseAngle);
+                            // Setup dest
+                            var dest = this.PL_joint[s][0];
+                            var x_tile = clamp(dest.x,0,Win_Width-1)>>3;
+                            var y_tile = clamp(dest.y,0,Win_Height-1)>>3;
+                            // Check for collisions
+                            for (var dist = 0; dist <= 20 && (Terrain.TR_tile_data[y_tile][x_tile] < 0 || Terrain.TR_tile_data[y_tile][x_tile] > 8); dist++) {
+                                dest = this.PL_joint[s][0].Vadd(mouseAngle);
+                                x_tile = clamp(dest.x,0,Win_Width-1)>>3;
+                                y_tile = clamp(dest.y,0,Win_Height-1)>>3;
+                            }
+                            // Move
+                            moveJoint(this.PL_joint[s][0], dest, 0,0.99);
+                        }
+                        Dodge_Cooldown = 50;
+                    }
+                    if (Dodge_Cooldown < 0) Dodge_Cooldown++;
+                } else if (Game_Mode!=1 && this.PL_held_player == -1 && Left_Click_Is_Down && Dodge_Cooldown <= 0){ // Dodge activation
+                    if (Dodge_Cooldown > -50) Dodge_Cooldown--;
+                }
             }
 
             switch (this.PL_class_ID[current_char]){
@@ -6110,6 +6507,7 @@ SR_Player.prototype.Boxer = function(current_char){
                     Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,box_heals_eff,0x00FF00); // output LP increase
                 }
                 antiCheatSet();
+                if (sfxEnabled) PlaySoundInterrupt(snd_atboxer, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6237,6 +6635,7 @@ SR_Player.prototype.Gladiator = function(current_char){
                     Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,gla_heals_eff,0x00FF00); // output LP increase
                 }
                 antiCheatSet();
+                if (sfxEnabled) PlaySoundInterrupt(snd_atglad, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6353,6 +6752,7 @@ SR_Player.prototype.Sniper = function(current_char){
                     this.PLprojectileAttack(current_char,this.PL_joint[current_char][6].x,this.PL_joint[current_char][6].y,snp_target); // perform projectile attack
                     this.PL_focus[current_char] = -1;                                                                                   // unset focus point
                 }
+                if (sfxEnabled) PlaySoundInterrupt(snd_atsniper, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6421,6 +6821,7 @@ SR_Player.prototype.Magician = function(current_char){
                     this.PLprojectileAttack(current_char,this.PL_joint[current_char][6].x,this.PL_joint[current_char][6].y,mgi_target); // perform projectile attack
                     this.PL_focus[current_char] = -1;                                                                                   // unset focus point
                 }
+                if (sfxEnabled) PlaySoundInterrupt(snd_atmag, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6444,11 +6845,16 @@ SR_Player.prototype.Magician = function(current_char){
 // priest class     original name: na
 window.fff = SR_Player.prototype.Priest;
 SR_Player.prototype.Priest = function(current_char){
-    var pri_target,pri_heals_eff;
+    var pri_target,pri_heals_eff,pri_MP;
     var pri_AGI = Agi_Min[current_char]+randInt(Agi_Max[current_char]-Agi_Min[current_char]+1); // set base stats
     var pri_range = Range[current_char];
     var pri_Xpos = (this.PL_joint[current_char][9].x+this.PL_joint[current_char][10].x)>>1; // set position
     var pri_Ypos = (this.PL_joint[current_char][9].y+this.PL_joint[current_char][10].y)>>1;
+
+    if (Reloading[current_char]) { //Drain MP when aura is active
+        if (MP_Bar[current_char] > 0) MP_Bar[current_char] -= (1/50)*(maxOf(getVal(Item_Inv[Stickmen_Slots+current_char],Weap_MP_Price), 20)/20);
+            else Reloading[current_char] = false;
+    }
 
     if (this.PL_is_grounded[current_char]!=0 && this.PL_held_player!=current_char){ // if on the ground and not being held
         if (this.PL_reload_ticks[current_char] > 0) // if ready to attack
@@ -6457,6 +6863,7 @@ SR_Player.prototype.Priest = function(current_char){
              pri_target = Enemies.ENfindEnemy(pri_Xpos-pri_range,pri_Ypos-(pri_range>>1),pri_Xpos+pri_range,pri_Ypos+(pri_range>>1)); // vertical Range is 1/2 for priest
         else pri_target = Players.PLfindPlayer(pri_Xpos-pri_range,pri_Ypos-(pri_range>>1),pri_Xpos+pri_range,pri_Ypos+(pri_range>>1),getLeader(current_char,1));
 
+        
         if (pri_target!=-1){ // when a target is found
             if (this.PL_reload_ticks[current_char]==0){       // when ready to attack
                 this.PL_reload_ticks[current_char] = pri_AGI; // restart reload timer
@@ -6464,6 +6871,21 @@ SR_Player.prototype.Priest = function(current_char){
                 this.PL_joint[current_char][6].y -= 2; // move right hand up
                 this.PL_joint[current_char][5].y += 2; // move left hand down
 
+                pri_MP = getVal(Item_Inv[Stickmen_Slots+current_char],Weap_MP_Price); // bonus attack activation
+                if (!Reloading[current_char]) {
+                    if (MP_Bar[current_char]+MAG[current_char] < pri_MP)                  // if this hit doesn't fill MP bar
+                        MP_Bar[current_char] += MAG[current_char];                        // add MAG to the magic bar
+                    else MP_Bar[current_char] = pri_MP;          
+                }                                                                   // otherwise set the magic bar to full (maxOf capacity of magic bar is the weapon's
+                if (MP_Bar[current_char]==pri_MP && pri_MP>0 || pri_MP==-1){        // if magic bar is full and weapon has a bonus attack, or if bonus attack is free
+                    if (!Reloading[current_char]) { // start drain
+                        Reloading[current_char] = true;
+                        Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,MP_Bar[current_char],0xFFFFFF);
+                    }                                     
+                    //Buff
+                    Status_Buff[current_char] = getVal(Item_Inv[Stickmen_Slots+current_char],Priest_Buff);
+                }
+                
                 if (checkEff(Stickmen_Slots+current_char,Card_Heals)){                                              // priest Heal's Card
                     pri_heals_eff = getEff(Stickmen_Slots+current_char,Eff1);
                     antiCheatCheck();
@@ -6486,6 +6908,7 @@ SR_Player.prototype.Priest = function(current_char){
                             this.PLprojectileAttack(current_char,this.PL_joint[current_char][6].x,this.PL_joint[current_char][6].y,s); // perform projectile attack
                     }
                 }
+                if (sfxEnabled) PlaySoundInterrupt(snd_atpriest, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6518,8 +6941,29 @@ SR_Player.prototype.Gunner = function(current_char){
     var gun_bullet = 1;
     var gnr_Xpos = (this.PL_joint[current_char][9].x+this.PL_joint[current_char][10].x)>>1; // set position
     var gnr_Ypos = (this.PL_joint[current_char][9].y+this.PL_joint[current_char][10].y)>>1;
+    var magFac = 1;
 
     if (this.PL_is_grounded[current_char]!=0 && this.PL_held_player!=current_char){ // if on the ground and not being held
+        //Reloading
+        if (MP_Bar[current_char] <= 0) {
+            if (!Reloading[current_char]) {
+                Reloading[current_char] = true;
+                Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,"(reload)",0x665544);
+            }
+            
+        }
+        if (Reloading[current_char]) {
+            if (MP_Bar[current_char] >= 100) {
+                PlaySoundSFX(snd_click2, false);
+                Reloading[current_char] = false;
+                Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,"ok",0x44FF99);
+                MP_Bar[current_char] = clamp(MP_Bar[current_char],0,100);     
+            }
+            else {
+                magFac = maxOf(MAG[current_char]/10, 1);
+                MP_Bar[current_char] += 1 + (MAG[current_char]/magFac)/10;
+            }
+        }
         if (this.PL_reload_ticks[current_char] > 0) // if ready to attack
             this.PL_reload_ticks[current_char]--;   // decrement reload timer
         if (Game_Mode!=1) // find target
@@ -6540,7 +6984,7 @@ SR_Player.prototype.Gunner = function(current_char){
             this.PL_joint[current_char][1].x -= 0.4*point_gun.x; // move neck left
             this.PL_joint[current_char][1].y -= 0.4*point_gun.y; // move neck up
 
-            if (this.PL_reload_ticks[current_char]==0){       // when ready to attack
+            if (!Reloading[current_char] && this.PL_reload_ticks[current_char]==0){       // when ready to attack
                 this.PL_reload_ticks[current_char] = gnr_AGI; // restart reload timer
                 // gunner body movement when attacking (gun recoil)
                 this.PL_joint[current_char][5].y -= 1.5;         // move left hand up
@@ -6557,13 +7001,13 @@ SR_Player.prototype.Gunner = function(current_char){
                         gun_bullet += getEff(Stickmen_Slots+current_char,Eff1)+floor(gun_bullet*getEff(Stickmen_Slots+current_char,Eff2)/100);
                 }
                 if (gun_cost>0){                                                                                                                            // create exception for starter gun
-                    gun_cost = maxOf(gun_cost-MAG[current_char],1);                                                                                         // set shooting cost after reduction from MAG (minimum of 1)
-                    if (gun_cost*gun_bullet <= Team_Gold){                                                                                                  // if you have enough gold to pay for each bullet
-                        Team_Gold = clamp(Team_Gold-gun_cost*gun_bullet,0,9999999);                                                                         // pay for each bullet
-                        for (var b=0; b<gun_bullet; b++)
-                            Indicators.INadd(this.PL_joint[current_char][6].x,this.PL_joint[current_char][6].y,point_gun.x<0? 0.5 :-0.5,gun_cost,0xFFFF00); // output gold payments
-                        gun_cost = 0;                                                                                                                       // after paying for bullets, set cost to 0
-                    }
+                    gun_cost = maxOf(gun_cost,1);                                                                                         // set shooting cost after reduction from MAG (minimum of 1)
+                    //if (gun_cost*gun_bullet <= Team_Gold){                                                                                                  // if you have enough gold to pay for each bullet
+                    MP_Bar[current_char] = clamp(MP_Bar[current_char]-gun_cost*gun_bullet,0,9999999);                                                                         // pay for each bullet
+                    for (var b=0; b<gun_bullet; b++)
+                        Indicators.INadd(this.PL_joint[current_char][6].x,this.PL_joint[current_char][6].y,point_gun.x<0? 0.5 :-0.5,Math.ceil(MP_Bar[current_char]/gun_cost),0xff8800); // output ammo payments
+                    gun_cost = 0;                                                                                                                       // after paying for bullets, set cost to 0
+                    //}
                 }
                 if (gun_cost==0){
                     if (checkEff(Stickmen_Slots+current_char,Card_Heals)){                                                            // gunner Heal's Card
@@ -6577,10 +7021,19 @@ SR_Player.prototype.Gunner = function(current_char){
                     }
                 }
                 antiCheatSet();
+                if (sfxEnabled) //snd_atgunner.play();
+                    PlaySoundInterrupt(snd_atgunner, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
             Swim(this,current_char);
+            if (Enemies.ENfindEnemy(gnr_Xpos-(gnr_range*1.5),gnr_Ypos-(gnr_range*1.5),gnr_Xpos+(gnr_range*1.5),gnr_Ypos+(gnr_range*1.5)) == -1 && this.PL_reload_ticks[current_char] <= 0 && MP_Bar[current_char] < 100) {
+                if (!Reloading[current_char]) {
+                    Reloading[current_char] = true;
+                    MP_Bar[current_char] = 0;
+                    Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,"(reload)",0x665544);
+                }
+            }
         }
     }
     pullJoints(this.PL_joint[current_char][0],this.PL_joint[current_char][1] ,3.6,0.5,0.5); // top of head to neck
@@ -6655,6 +7108,7 @@ SR_Player.prototype.Whipper = function(current_char){
                     Indicators.INadd(this.PL_joint[current_char][0].x,this.PL_joint[current_char][0].y,0,wpr_heal_crd,0x00FF00); // output LP increase
                 }
                 antiCheatSet();
+                if (sfxEnabled) PlaySoundInterrupt(snd_atwhipper, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6792,6 +7246,7 @@ SR_Player.prototype.Angel = function(current_char){
                 Normalize(ring_vector);
                 scaleVector2D(ring_vector,2);
                 this.PL_joint[current_char][this.PL_focus[current_char]].Vadd(ring_vector);
+                if (sfxEnabled) PlaySoundInterrupt(snd_atangel, false);
             }
         } else if ((this.PL_is_grounded[current_char]&3)>0){ // if a target is not found
             Walk(this,current_char);
@@ -6935,6 +7390,8 @@ SR_Player.prototype.PLrenderPlayer = function(){ // Pg.prototype.b
         }
         Display_Mode = Display_Mode2 = 0;
 
+        if (Dodge_Cooldown < -45) dispItemCentered(Control_Img,Mouse_Xpos - 5,Mouse_Ypos - 5,40 + absVal(Dodge_Cooldown)/5,40 + absVal(Dodge_Cooldown)/5,0,0,12,12,0x22ffffFF);
+        
         if (this.PL_class_ID[s]==8){ // if stickman is an angel draw wings
             b = (color&0xFFFFFF)>>17<<16|(color&0x00FFFF)>>9<<8|(color&0x0000FF)>>1;
             drawLine(this.PL_joint[s][1].x,this.PL_joint[s][1].y,this.PL_joint[s][11].x,this.PL_joint[s][11].y,b);
@@ -7076,6 +7533,14 @@ SR_Player.prototype.PLrenderPlayer = function(){ // Pg.prototype.b
                 drawButton(floor(this.PL_joint[s][0].x)-6,floor(this.PL_joint[s][0].y)-6,13,2,0x990000);
                 drawButton(floor(this.PL_joint[s][0].x)-6,floor(this.PL_joint[s][0].y)-6,floor(13*LP_Current[s]/LP_Max[s]),2,0x00CC00);
             }
+            //MP Bar
+            if (Reloading[s]) {
+                var e = maxOf(getVal(Item_Inv[Stickmen_Slots+s],Weap_MP_Price),1);
+                // Special case for gunners
+                if (getVal(Item_Inv[Stickmen_Slots+s],Item_Class_ID) == 6) e = 100;
+                drawButton(floor(this.PL_joint[s][0].x)-6,floor(this.PL_joint[s][0].y)-18,13,2,0x444400);
+                drawButton(floor(this.PL_joint[s][0].x)-6,floor(this.PL_joint[s][0].y)-18,floor(13*(MP_Bar[s]/e)),2,0x0000FF);
+            }
             if (Selected_Player==s && Game_Mode==0){
                 if (Sett_PL_Symbol==0){
                     drawButton(floor(this.PL_joint[s][0].x)-1,floor(this.PL_joint[s][0].y)-8,3,3,0xFFFF00);
@@ -7107,56 +7572,57 @@ var En_Drop1 = 63;  // original name og
 var En_DropRate1 = 64, En_DropRate2 = 66, En_DropRate3 = 68;
 var EN_Info = [     // EN_Info original name: B[]
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
-// Halloween Hills       ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
+// Opening Cave       ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,  mach punch 1,stone whip 1,White Stone 1
-    [1 ,0 ,1 ,1,0x33CC33,0x996633,10    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,1   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,1   ,7  ,40 ,189,40 ,19 ,80 ], // Green Smiley Walker 0
+    [1 ,2 ,15 ,1,0xCCCCBB,0x554466,10    ,3    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,1   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,1   ,3  ,40 ,188,40 ,19 ,80 ], // Gray Shield Bat
   //[1 ,0 ,1 ,1,0x33CC33,0x996633,10    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,1   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,1   ,89 ,1  ,112,1  ,108,1  ], // Green Smiley Walker (drops edited)
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,  iron sword 1,fire ring 1,Red Stone 1
-    [2 ,0 ,1 ,1,0x33CCFF,0x996633,20    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,2   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,3   ,8  ,15 ,290,15 ,20 ,40 ], // Cyan Smiley Walker 1
+    [2 ,0 ,1 ,1,0xFFFFCC,0x993311,20    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,2   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,3   ,4  ,15 ,289,15 ,20 ,40 ], // White Smiley Walker
   //[2 ,0 ,1 ,1,0x33CCFF,0x996633,20    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,2   ,3   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,3   ,96 ,1  ,80 ,1  ,24 ,1  ], // Cyan Smiley Walker (drops edited)
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  ,triple shot 1,staff of wood 1,Green Stone 1
-    [3 ,0 ,2 ,1,0xCC0000,0x996633,50    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,3   ,5   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,10  ,9  ,60 ,60 ,40 ,21 ,70 ], // Red Smiley Walker 2
+    [3 ,0 ,2 ,1,0xFFCC66,0x993311,50    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,3   ,5   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,10  ,5  ,60 ,58 ,40 ,21 ,70 ], // Yellow Smiley Walker 0
   //[3 ,0 ,2 ,1,0xCC0000,0x996633,50    ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,3   ,5   ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,10  ,561,1  ,561,1  ,561,1  ], // Red Smiley Walker 2 (edited)
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   explosion 1,handgun 1,Blue Stone 1
-    [4 ,0 ,3 ,1,0x0000FF,0x996633,40    ,4    ,0,2 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,100 ,10,5 ,100,0,0,0  ,0,4   ,5   ,1 ,100 ,50 ,20  ,80  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,15  ,10 ,15 ,77 ,15 ,22 ,40 ], // Blue X Walker 3
+    [4 ,7 ,3 ,1,0xFF9999,0x993311,40    ,4    ,0,2 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,100 ,10,5 ,100,0,0,0  ,0,4   ,5   ,1 ,100 ,50 ,20  ,80  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,15  ,6 ,15 ,76 ,15 ,22 ,40 ], // Pink X Fish
   //[4 ,0 ,3 ,1,0x0000FF,0x996633,40    ,4    ,0,2 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,100 ,10,5 ,100,0,0,0  ,0,4   ,5   ,1 ,100 ,50 ,20  ,80  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,15  ,561,1  ,561,1  ,561,1  ], // Blue X Walker (edited)
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,triple shot 1,mach punch 1,Iron Medal 1
-    [5 ,0 ,2 ,2,0x808080,0x996633,500   ,3    ,0,2 ,0xFF808080,1,8 ,8 ,8 ,8 ,0  ,0  ,100 ,10,0 ,100,0,0,0  ,0,1   ,3   ,10,10  ,10 ,15  ,120 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,500  ,100 ,9  ,3  ,7  ,5  ,48 ,10 ], // Grey Boss Smiley Walker 4
-  //[5 ,0 ,2 ,2,0x808080,0x996633,1E7   ,0    ,0,2 ,0xFF808080,1,8 ,8 ,8 ,8 ,0  ,0  ,100 ,10,0 ,100,0,0,0  ,0,1   ,3   ,10,10  ,10 ,15  ,120 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,500  ,100 ,9  ,3  ,7  ,5  ,48 ,10 ], // Dummy Boss
+    [5 ,2 ,15 ,2,0xA0A0A0,0x554466,500   ,3    ,0,2 ,0xFF808080,1,8 ,8 ,8 ,8 ,0  ,20  ,100 ,10,0 ,100,0,0,0  ,0,1   ,3   ,10,10  ,100 ,20  ,120 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,500  ,100 ,0  ,3  ,0  ,5  ,48 ,10 ], // White Boss Shield Bat
+    //[5 ,0 ,2 ,2,0x808080,0x996633,1E7   ,0    ,0,2 ,0xFF808080,1,8 ,8 ,8 ,8 ,0  ,0  ,100 ,10,0 ,100,0,0,0  ,0,1   ,3   ,10,10  ,10 ,15  ,120 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,500  ,100 ,9  ,3  ,7  ,5  ,48 ,10 ], // Dummy Boss
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
-// Grassland 1 ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
+// Jade Tropics ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,    poison arrow 1,___,Black Stone 1
-    [5 ,1 ,4 ,1,0x33CC33,0x339933,50    ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,3   ,4   ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,10  ,13 ,40 ,0  ,0  ,23 ,80 ], // Green Skull Snake 5
+    [5 ,1 ,14 ,1,0xF08020,0x993311,50    ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,3   ,4   ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,10  ,FireShard ,40 ,ThunderShard  ,40  ,23 ,80 ], // Green Skull Snake 5
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,  ice 1,___,Red Crystal 1
-    [6 ,1 ,2 ,1,0x808080,0x996633,80    ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,4   ,6   ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,20  ,14 ,20 ,0  ,0  ,24 ,60 ], // Grey Smiley Snake 6
+    [6 ,8 ,9 ,1,0x996633,0xFFCCCC,90    ,6    ,0,13 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,400  ,40,1 ,100,0,0,0  ,0,6   ,8   ,3 ,10  ,20 ,1000  ,120  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,PhysicalShard ,15 ,IceShard ,15 ,25 ,30 ], // Red Skull Snake (GL1) 7
+    
+    [7 ,1 ,4 ,2,0x338833,0x223333,200    ,3    ,1,4 ,0xFFFFFFFF,1,32,32,16 ,16 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,9   ,16   ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,20  ,PoisonShard ,20 ,PhysicalShard  ,20  ,24 ,60 ], // Orange Vampire Snake 6
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , fire sword 1,submachine-gun 1,Yellow Crystal 1
-    [7 ,1 ,4 ,1,0xCC3333,0x990000,90    ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,6   ,8   ,3 ,20  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,12 ,15 ,78 ,15 ,25 ,30 ], // Red Skull Snake (GL1) 7
-  //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   thunder glove 1,___,Quick's Card 1
-    [8 ,1 ,4 ,2,0x33CC33,0x339933,200   ,3    ,1,4 ,0xFFFFFFFF,1,24,24,12,12,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,8   ,12  ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,200  ,30  ,11 ,15 ,0  ,0  ,39 ,50 ], // Green Boss Skull Snake 8
+    //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   thunder glove 1,___,Quick's Card 1
+    [8 ,1 ,4 ,2,0x33CC33,0x339933,200   ,3    ,1,4 ,0xFFFFFFFF,1,24,24,12,12,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,8   ,12  ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,200  ,30  ,FireShard ,15 ,ThunderShard  ,15  ,39 ,50 ], // Green Boss Skull Snake 8
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
-// Grassland 2 ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
+// Sage Grove ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,fire glove 1,___,Silver Crystal 1
-    [8 ,2 ,4 ,1,0xFFCC99,0xCC9933,60    ,3    ,1,9 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,50  ,30,0 ,100,0,0,0  ,0,3   ,4   ,1 ,10  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,15 ,30 ,0  ,0  ,26 ,70 ], // White Skull Bat (GL2) 9
+    [8 ,2 ,15,1,0x99AA00,0x996633,60    ,3    ,1,1 ,0xFF99AA00,1,16,16,8 ,8 ,0  ,0  ,50  ,30,0 ,100,0,0,0  ,0,3   ,4   ,1 ,10  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,PoisonShard ,30 ,IceShard  ,30  ,26 ,70 ], // White Skull Bat (GL2) 9
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , , double arrow 1,shotgun 1,Black Crystal 1
-    [9 ,0 ,2 ,1,0xCC6600,0x996633,120   ,2    ,1,1 ,0xFFFFFF33,1,16,16,8 ,8 ,0  ,0  ,10  ,10,0 ,100,0,0,0  ,0,8   ,12  ,1 ,1   ,50 ,20  ,20  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,17 ,30 ,79 ,40 ,28 ,80 ], // Orange Smiley Walker (GL2) 10
-  //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    , fire 1,___,White Stone 1
-    [10,0 ,3 ,1,0x660099,0xCC9933,110   ,4    ,0,2 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,150 ,10,4 ,100,0,0,0  ,0,6   ,8   ,1 ,120 ,50 ,20  ,150 ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,40  ,18 ,20 ,0  ,0  ,19 ,40 ], // Purple X Walker 11
-  //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   thunder sword 1,___,Black Stone 1
-    [11,2 ,4 ,1,0xFF6600,0xCC9933,110   ,3    ,1,9 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,50  ,30,0 ,100,0,0,0  ,0,6   ,8   ,3 ,10  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,200  ,50  ,16 ,20 ,0  ,0  ,23 ,40 ], // Orange Skull Bat (GL2) 12
+    [8 ,0 ,4 ,1,0xFFCC00,0x996633,110   ,4    ,1,9 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,150  ,30,3 ,100,0,0,0  ,0,2   ,6   ,2 ,100  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,200  ,50  ,PhysicalShard ,20 ,ThunderShard  ,20  ,23 ,40 ], // Orange Skull Bat (GL2) 12
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   thunder sword 1,___,Long Sword's Card 1
-    [12,2 ,4 ,2,0x808080,0x996633,500   ,3    ,1,9 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,150 ,30,0 ,100,0,0,0  ,0,5   ,6   ,12,20  ,50 ,15  ,100 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,800  ,200 ,16 ,5  ,0  ,0  ,40 ,10 ], // Grey Boss Skull Bat 13
+    [9 ,8 ,9 ,1,0x00FF90,0x884444,120   ,9006 ,0,13,0xFF00FF90,1,16,16,8 ,8 ,20  ,30 ,400,40,1 ,101,0,0,0  ,0,8  ,12  ,4 ,5  ,20 ,240   ,120  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,30  ,PoisonShard ,30 ,FreezeShard ,40 ,28 ,80 ], // Orange Smiley Walker (GL2) 10
+  //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    , fire 1,___,White Stone 1
+    [11,5 ,3 ,1,0xA066FF,0x996633,110   ,4    ,0,2 ,0xFF808080,1,16,16,8 ,8 ,0  ,0  ,150 ,10,4 ,100,0,0,0  ,0,6   ,8   ,1 ,120 ,50 ,20  ,150 ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,100  ,40  ,IceShard ,20 ,PhysicalShard  ,20  ,19 ,40 ], // Purple X Walker 11
+  //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,   thunder sword 1,___,Black Stone 1
+    [12,0 ,4 ,2,0x808080,0x996633,500   ,4    ,1,9 ,0xFF808080,1,16,16,8 ,8 ,0  ,50  ,150 ,30,-3 ,100,0,1,0  ,0,5   ,6   ,12,150  ,50 ,15  ,100 ,0,1   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,800  ,200 ,ThunderShard ,5  ,PhysicalShard  ,5  ,40 ,10 ], // Grey Boss Skull Bat 13
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
-// Grassland 3 ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
+// Moss Hovel ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,long staff 1,___,Ruby 1 ,   ],
-    [10,3 ,4 ,1,0x99CC00,0x666666,90    ,1    ,1,2 ,0xFF99CC00,1,8 ,8 ,8 ,8 ,0  ,0  ,100 ,20,5 ,100,0,0,0  ,0,1   ,4   ,1 ,0   ,20 ,50  ,80  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,150  ,40  ,61 ,20 ,0  ,0  ,31 ,80 ], // Green Skull Dragon 14
+    [10,0,4,1,14736593,10040081,140,4,1,9,4292269782,1,16,16,8,8,0,0,150,50,5,100,0,0,0,0,3,5,3,100,100,30,90,0,0,0,0,0,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,100,0,0,0,0,0,0,0,100,50,0,0,0,0,0,0], // White Skull Walker 14
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,___,___,Sapphire 1
-    [10,1 ,2 ,1,0x669900,0x666600,200   ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,20  ,40,0 ,100,0,0,0  ,0,8   ,12  ,1 ,5   ,50 ,20  ,40  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,150  ,40  ,0  ,0  ,0  ,0  ,33 ,80 ], // Green Smiley Snake 15
+    [10,18,8,1,0x88FF00,10040081,120,3,0,13,4292804550,1,16,16,8,8,0,0,125,50,1,100,0,0,5,0,4,8,1,5,100,20,150,0,0,0,0,0,0,20,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,100,0,0,0,0,0,0,0,100,40,0,0,0,0,0,0], // Green Gel Tree 15
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,    thunder ring 1,___,Topaz 1    ],
-    [11,2 ,4 ,1,0x669900,0x666600,140   ,3    ,1,9 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,50  ,30,0 ,100,0,0,0  ,0,6   ,8   ,2 ,10  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,150  ,50  ,291,20 ,0  ,0  ,35 ,80 ], // Green Skull Bat 16
+    [11,2 ,15,1,0xFFCC00,0x993311,140   ,3    ,1,4 ,0xFFFFFFFF,1,16,16,8 ,8 ,0  ,0  ,50  ,30,0 ,100,0,0,0  ,0,6   ,8   ,2 ,10  ,50 ,20  ,60  ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,150  ,50  ,291,20 ,0  ,0  ,35 ,80 ], // Green Shield Bat 16
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     , fire whip 1,___,Emerald 1  ],
-    [12,3 ,4 ,2,0x990000,0x330000,160   ,1    ,1,2 ,0xFF990000,1,8 ,8 ,8 ,8 ,0  ,0  ,100 ,20,5 ,100,0,0,0  ,0,1   ,8   ,1 ,0   ,20 ,100 ,150 ,0,0   ,0    ,0   ,0   ,0   ,0   ,0  ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,150  ,60  ,190,10 ,0  ,0  ,36 ,30 ], // Red Big Skull Dragon 17
+    [13,5,8,1,65535,10040081,260,6,0,13,4291297021,1,16,16,8,8,0,0,200,50,2,100,0,1,5,0,6,10,2,10,80,20,180,0,0,0,0,20,0,0,0,0,0,0,4294967295,1,16,16,16,16,0,0,0,100,0,0,0,0,0,0,0,100,60,0,0,0,0,0,0], //Blue Gel Tree 17
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , , Catapult's Card 1,___,Ring's Card 1
-    [14,3 ,4 ,3,0xCC6600,0x990000,800   ,3    ,1,2 ,0xFFCC6600,1,16,16,8 ,8 ,0  ,0  ,150 ,30,3 ,100,0,0,0  ,0,4   ,8   ,1 ,20  ,20 ,200 ,150 ,0,0   ,0    ,0   ,0   ,0   ,0   ,80 ,0,0,0 ,0xFF000000,1,0 ,0  ,0 ,0  ,0   ,0 ,0 ,0  ,0,0,0,0 ,0   ,0 ,0,1000 ,300 ,41 ,10 ,0  ,0  ,459,10 ], // Orange Boss Skull Dragon 18
+  [14,5 ,8 ,3,16720384,10027008,800,5,1,2 ,4294910464,1,16,16,8 ,8 ,0  ,25,150 ,30,1,100,0,0,0  ,0,12   ,16   ,3,20  ,10,200 ,150 ,0,0   ,0    ,20   ,0   ,0   ,0   ,80 ,0,0,0 ,4294967295,1,16,16,16,16,0,0,0,100,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Red Boss Gel Tree 18
   //[0 ,1 ,2 ,3,4       ,5       ,6     ,7    ,8,9 ,10        ,1,12,13,14,15,16 ,17 ,18  ,19,20,21 ,2,3,24 ,5,26  ,27  ,28,29  ,30 ,31  ,32  ,3,34  ,35   ,36  ,37  ,38  ,39  ,40 ,1,2,43,44        ,5,46,47 ,48,49 ,50  ,51,52,53 ,4,5,6,57,58  ,59,0,61   ,62  ,63 ,64 ,65 ,66 ,67 ,68 ],
 // Grassland 4 ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,   ,   ,   ,   ],
   //[  ,  ,  , ,        ,        ,      ,     , ,  ,          , ,  ,  ,  ,  ,   ,   ,    ,  ,  ,   , , ,   , ,    ,    ,  ,    ,   ,    ,    , ,    ,     ,    ,    ,    ,    ,   , , ,  ,          , ,  ,   ,  ,   ,    ,  ,  ,   , , , ,  ,    ,  , ,     ,    ,   ,   ,___,___,Peridot 1
@@ -8030,7 +8496,7 @@ SR_Enemy.prototype.ENspawn = function(x_pos,y_pos,ID){ // aa.add
         this.EN_frozen_ticks[this.EN_index_current] = 0;
         this.EN_elite_type[this.EN_index_current] = -1;
         if (random(100) < 8) {
-            this.EN_elite_type[this.EN_index_current] = randomRange(0, 2);
+            //this.EN_elite_type[this.EN_index_current] = randomRange(0, 2);
             //this.EN_elite_type[this.EN_index_current] = 1;
         }
         //Health
@@ -8123,6 +8589,7 @@ SR_Enemy.prototype.ENgroundCollision = function(monster,limb,speed){
 SR_Enemy.prototype.ENfindEnemy = function(left_bound,bottom_bound,right_bound,top_bound){ // aa.m
     var en_size,species,hitbox,enemy_pos;
     var Range = (left_bound+right_bound)>>1;
+    var Depth = (top_bound+bottom_bound)>>1;
     var distance = 1000;
     var closest_target_ID = -1;
 
@@ -8137,8 +8604,8 @@ SR_Enemy.prototype.ENfindEnemy = function(left_bound,bottom_bound,right_bound,to
 
         if (this.EN_health[i]!=0 && right_bound>=enemy_pos.x-hitbox && left_bound<=enemy_pos.x+hitbox && top_bound>=enemy_pos.y-en_size && bottom_bound<=enemy_pos.y+en_size){
             this.EN_is_found[i] = 1;
-            if (absVal(enemy_pos.x-Range) < distance){
-                distance = absVal(enemy_pos.x-Range);
+            if (absVal(enemy_pos.x-Range) + absVal(enemy_pos.y-Depth) < distance) {
+                distance = absVal(enemy_pos.x-Range) + absVal(enemy_pos.y-Depth);
                 closest_target_ID = i;
             }
         }
@@ -8167,32 +8634,55 @@ SR_Enemy.prototype.ENtakeDamage = function(splash,type,type_parameter,ATmin,ATma
         {
             en_damage = ATmin + floor(random(ATmax - ATmin + 1));
             if (type==4){ // poison attack
+                PlaySoundSFX(snd_poison, false);
                 this.EN_poison_ticks[e] = type_parameter-floor(type_parameter*EN_Info[this.EN_array_ID[e]][Po_Resist]/100);
                 this.EN_poison_dmg[e] = en_damage;
                 if (EN_Info[this.EN_array_ID[e]][Po_Resist]<0)
                     this.EN_poison_dmg[e] = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Po_Resist]/100));
             } else {
+                var dmgColor = 0xC0c0c0,
+                    fire = 0xFF3333,       // red
+                    ice = 0x6C6CCB,        // blue
+                    thunder = 0xEDED00;    // yellow
                 if (type==0) // physical damage
-                    en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Ph_Resist]/100));
-                    if (this.EN_elite_type[e] == 0) { en_damage = Math.ceil(en_damage/2); }
+                    { 
+                        en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Ph_Resist]/100));
+                        PlaySoundSFX(snd_physical, false);
+                        if (this.EN_elite_type[e] == 0) { en_damage = Math.ceil(en_damage/2); }
+                    }
                 if (type==1) // fire damage
-                    en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Fi_Resist]/100));
+                    {en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Fi_Resist]/100));
+                    PlaySoundSFX(snd_fire, false);
+                    dmgColor = fire;}
                 if (type==2) // ice damage
-                    en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Ic_Resist]/100));
+                    {en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Ic_Resist]/100));
+                    PlaySoundSFX(snd_ice, false);
+                    dmgColor = ice;}
                 if (type==3) // thunder damage
-                    en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Th_Resist]/100));
+                    {en_damage = maxOf(1,en_damage-floor(en_damage*EN_Info[this.EN_array_ID[e]][Th_Resist]/100));
+                    PlaySoundSFX(snd_thunder, false);
+                    dmgColor = thunder;}
 
-                if ((Sett_Dmg_Indicators&1)==0)
-                    Indicators.INadd(this.EN_joint[e][this.EN_center].x,this.EN_joint[e][this.EN_center].y-hurtbox_height,1,en_damage,0xC0C0C0);
+                if ((Sett_Dmg_Indicators&1)==0) {
+                    if (DIRE_crit_highlight) {
+                        PlaySoundSFX(snd_crit, false);
+                        dmgColor = 0xF0F000;
+                        Indicators.INadd(this.EN_joint[e][this.EN_center].x,this.EN_joint[e][this.EN_center].y-hurtbox_height-24,1,"CRIT!",dmgColor);
+                        DIRE_crit_highlight = 0;
+                    }
+                    Indicators.INadd(this.EN_joint[e][this.EN_center].x,this.EN_joint[e][this.EN_center].y-hurtbox_height,1,en_damage,dmgColor);
+                }
 
                 this.EN_health[e] = maxOf(this.EN_health[e]-en_damage,0);
                 this.EN_is_provoked[e] = en_damage;
             }
             if (type==2) // ice slow
+                {PlaySoundSFX(snd_ice, false);
                 this.EN_ice_ticks[e] = 500-floor(500*EN_Info[this.EN_array_ID[e]][Ic_Resist]/100);
-                this.EN_slowness[e] = type_parameter;
-            if (type==5) // freeze stop
-                this.EN_frozen_ticks[e] = type_parameter-floor(type_parameter*EN_Info[this.EN_array_ID[e]][Fr_Resist]/100);
+                this.EN_slowness[e] = type_parameter;}
+            if (type==5)  // freeze stop
+                {PlaySoundSFX(snd_freeze, false);
+                this.EN_frozen_ticks[e] = type_parameter-floor(type_parameter*EN_Info[this.EN_array_ID[e]][Fr_Resist]/100);}
 
             target_ID = e;
             Players.PL_dmg_dealt += en_damage;
@@ -8414,7 +8904,7 @@ function enemyDeath(enemy,en_ID,xp_is_given){ // original name: Jg()
         if (checkEff(Stickmen_Slots+s,Medal_Iron))
             exp_mult += getEff(Stickmen_Slots+s,Eff1);
     }
-    xp_earned = floor(xp_earned*exp_mult/100);
+    xp_earned = floor(2*xp_earned*exp_mult/100);
 
     if (xp_is_given==1)
         return xp_earned;
@@ -8476,6 +8966,7 @@ function enemyDeath(enemy,en_ID,xp_is_given){ // original name: Jg()
     var gold_value_mult = 100;
     var onigiri_rate_mult = 100;
     var drop_rate_mult = 100;
+    var enemy_size = EN_Info[enemy.EN_array_ID[en_ID]][EN_Size];
     for (var s=0; s<Stickmen_Slots; s++){
         if (checkEff(Stickmen_Slots+s,Medal_Bronze))
             drop_rate_mult += getEff(Stickmen_Slots+s,Eff1);
@@ -8498,6 +8989,11 @@ function enemyDeath(enemy,en_ID,xp_is_given){ // original name: Jg()
         Drops.DPadd(enemy.EN_joint[en_ID][direction].x,enemy.EN_joint[en_ID][direction].y,1,floor(gold_value*gold_value_mult/100),0); // gold drop
     if (500*Math.random() < onigiri_rate_mult) // 20% chance of dropping onigiri
         Drops.DPadd(enemy.EN_joint[en_ID][direction].x,enemy.EN_joint[en_ID][direction].y,2,0,0); // onigiri drop
+    if (enemy_size > 1) {
+        PlaySoundSFX(snd_deathboss1, false);
+    } else {
+        PlaySoundSFX(snd_deathplayer, false);
+    }
     return 0;
 }
 
@@ -8574,14 +9070,23 @@ SR_Enemy.prototype.ENwlk = function(current_en){
         moveJoint(this.EN_joint[current_en][2],this.EN_joint_destination[current_en][2],0.05 ,0.99);
 
         // movement
-        if ((this.EN_is_grounded[current_en]&3)>0){
-            var wlk_var1 = -0.1;
-            if (this.EN_state[current_en]==2)
-                wlk_var1 *= -1;
-            this.EN_joint[current_en][1].x += random(wlk_var1);
-            this.EN_joint[current_en][2].x += random(wlk_var1);
-            if (random(100)<1)
-                this.EN_state[current_en] = cycle(this.EN_state[current_en]+1,1,2);
+        var isUnderwater = Terrain.TR_tile_data[clamp(this.EN_joint[current_en][0].y,0,DIRE_Inv_Top-1)>>3][clamp(this.EN_joint[current_en][0].x,0,Win_Width-1)>>3] == 9;
+        if ((this.EN_is_grounded[current_en]&3)>0 || isUnderwater){
+            if (this.EN_is_grounded[current_en] || random(100) < 3) {
+                var wlk_var1 = -0.1;
+                if (this.EN_state[current_en]==2)
+                    wlk_var1 *= -1;
+                this.EN_joint[current_en][1].x += random(wlk_var1);
+                this.EN_joint[current_en][2].x += random(wlk_var1);
+                if (random(100)<1)
+                    this.EN_state[current_en] = cycle(this.EN_state[current_en]+1,1,2);
+            }
+        }
+        //var tilex = clamp(this.EN_joint[current_en][0].x,0,Win_Width-1)>>3;
+        //var tiley = clamp(this.EN_joint[current_en][0].y,0,DIRE_Inv_Top-1)>>3;
+        if (isUnderwater && random(100) < 75) {
+            this.EN_joint[current_en][1].y -= 0.04;
+            this.EN_joint[current_en][2].y -= 0.04;
         }
 
         // sew limbs
@@ -8661,8 +9166,8 @@ SR_Enemy.prototype.ENsnk = function(current_en){
             } else   snk_var1 = fiftyfifty(-1,1);
 
             if (random(100)<10){
-                this.EN_joint[current_en][0].x += randomRange(0.4,0.6)*snk_var1;
-                this.EN_joint[current_en][0].y += randomRange(-1.5,-2);
+                this.EN_joint[current_en][0].x += randomRange(0.4,0.8)*snk_var1;
+                this.EN_joint[current_en][0].y += randomRange(-1.5,-3);
             }
         }
 
@@ -10640,105 +11145,21 @@ SR_Enemy.prototype.ENdrawIcon = function(array_ID,x_pos,y_pos,if_not_book){ // h
 // 1: Stage Unlocked, Not Beaten
 // 3: Stage Completed, Book for this stage not bought.
 // 7: Stage Completed, Book for this stage bought.
-var Stage_Count = 90; // Stage_Count original name: ze
+var Stage_Count = 5; // Stage_Count original name: ze
 var Stage_Status = [3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; // Stage_Status[] original name: Ae
 var Unlocked = 1; // original name: Ce
 var Beaten = 2; // original name: Be
 var Booked = 4; // original name: kg
-var Book_List = [1,2,3,4,5,6,7,8,11,12,13,9,10,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,71,72,73,74,75,76,78,79,80,81,82,83,84,85,86,87,88,89,0,0,0,0,0]; // stages in book jg[]
-var Shop_Reqs = [1,2,3,4,5,5,6,6,7,7,9,5,6,7,1,8,8,9,9,9,1,10,11,11,12,12,13,13,14,14,12,13,14,1,15,15,15,16,16,1,17,17,18,17,18,18,18,1,19,19,19,20,20,20,21,23,20,21,21,22,22,23,22,23,24,24,24,24,24,25,1,1,24,25,26,26,26,1,27,27,28,28,1,29,30,31,32,33,1,1]; // stages that must be Beaten in order to unlock next weapon in shop gg[]
-var Stage_Names = "Town;Halloween Hills;Grasslands 1;Grasslands 2;Grasslands 3;Grasslands 4;Grasslands 5;Grasslands 6;Grasslands 7;Castle Gate;Castle;Hill Country 1;Hill Country 2;Hill Country 3;Lake;Forest 1;Forest 2;Cavern 1;Cavern 2;Cavern 3;Village;Seaside 1;Seaside 2;Seaside 3;Seaside 4;Submarine 1;Submarine 2;Submarine 3;Submarine 4;Submarine Shrine;Mist Grove 1;Mist Grove 2;Mist Grove 3;???;Desert 1;Desert 2;Desert 3;Desert 4;Desert 5;Oasis;Desert 6;Desert 7;Pyramid;Desert 8;Beach 1;Beach 2;Beach 3;Resort;Cavern 4;Cavern 5;Cavern 6;Snowfield 1;Snowfield 2;Mountain 1;Mountain 2;Mountaintop;Snowfield 3;Snowfield 4;Snowfield 5;Snowfield 6;Snowfield 7;Snowfield 8;Frozen Lake;Ice Castle;Snowfield 9;Beach 4;Forest 3;Forest 4;Forest 5;Forest 6;Forget Tree;!!!;Hell 1;Hell 2;Hell 3;Hell 4;Hell 5;Island;Hell 6;Inferno 1;Inferno 2;Inferno 3;Blood Lake;Cavern 7;Cavern 8;Hell 7;Hell 8;Hell Gate;Hell Castle;Volcano".split(";"); // original name: Uf
+var Book_List = [1,2,3,4,5]; // stages in book jg[]
+var Shop_Reqs = [1,2,3,4,5]; // stages that must be Beaten in order to unlock next weapon in shop gg[]
+var Stage_Names = "Town;Opening Cave;Jade Tropics;Sage Grove;Moss Hovel".split(";"); // original name: Uf
+var Stage_Songs = [mus_restarea, mus_cavewater, mus_jungle, mus_wetforest, mus_cavewater];
 var Dot_Locations = [ // original name: De[]
-    [6  ,28,0,1 ,0 ], // Town
-    [10 ,28,0,2 ,0 ], // Halloween Hills
-    [11 ,24,0,3 ,11], // Grasslands 1
-    [10 ,20,0,4 ,5 ], // Grasslands 2
-    [8  ,16,0,6 ,0 ], // Grasslands 3
-    [12 ,17,0,6 ,14], // Grasslands 4
-    [11 ,12,0,7 ,0 ], // Grasslands 5
-    [15 ,13,0,8 ,0 ], // Grasslands 6
-    [20 ,13,0,9 ,15], // Grasslands 7
-    [24 ,16,0,10,0 ], // Castle Gate
-    [28 ,16,1,21,0 ], // Castle
-    [15 ,23,0,12,0 ], // Hill Country 1
-    [18 ,20,0,13,0 ], // Hill Country 2
-    [22 ,19,0,9 ,0 ], // Hill Country 3
-    [15 ,17,0,0 ,0 ], // Lake
-    [20 ,10,0,16,0 ], // Forest 1
-    [22 ,7 ,0,17,0 ], // Forest 2
-    [22 ,4 ,1,18,0 ], // Cavern 1
-    [14 ,3 ,0,19,0 ], // Cavern 2
-    [6  ,4 ,1,20,0 ], // Cavern 3
-    [4  ,7 ,0,0 ,0 ], // Village
-    [33 ,16,0,22,30], // Seaside 1
-    [34 ,12,0,23,0 ], // Seaside 2
-    [37 ,9 ,0,24,0 ], // Seaside 3
-    [41 ,10,0,25,0 ], // Seaside 4
-    [42 ,13,0,26,28], // Submarine 1
-    [39 ,16,0,27,0 ], // Submarine 2
-    [43 ,19,0,29,0 ], // Submarine 3
-    [45 ,14,0,29,0 ], // Submarine 4
-    [48 ,17,2,34,0 ], // Submarine Shrine
-    [35 ,20,0,31,0 ], // Mist Grove 1
-    [38 ,21,0,32,0 ], // Mist Grove 2
-    [42 ,24,0,33,0 ], // Mist Grove 3
-    [46 ,24,0,0 ,0 ], // ???
-    [53 ,17,0,35,36], // Desert 1
-    [57 ,16,0,37,0 ], // Desert 2
-    [57 ,20,0,38,0 ], // Desert 3
-    [60 ,14,0,39,0 ], // Desert 4
-    [61 ,19,0,39,0 ], // Desert 5
-    [63 ,16,1,40,41], // Oasis
-    [66 ,14,0,42,0 ], // Desert 6
-    [66 ,18,0,42,43], // Desert 7
-    [69 ,16,1,48,0 ], // Pyramid
-    [70 ,20,0,44,0 ], // Desert 8
-    [72 ,24,0,45,0 ], // Beach 1
-    [76 ,26,0,46,0 ], // Beach 2
-    [72 ,30,0,47,0 ], // Beach 3
-    [65 ,28,0,0 ,0 ], // Resort
-    [74 ,14,1,49,0 ], // Cavern 4
-    [78 ,8 ,0,50,0 ], // Cavern 5
-    [84 ,10,1,51,0 ], // Cavern 6
-    [87 ,12,0,52,56], // Snowfield 1
-    [86 ,16,0,53,0 ], // Snowfield 2
-    [81 ,18,0,54,0 ], // Mountain 1
-    [78 ,14,0,55,0 ], // Mountain 2
-    [79 ,11,0,0 ,0 ], // Mountaintop
-    [91 ,11,0,57,0 ], // Snowfield 3
-    [93 ,14,0,58,59], // Snowfield 4
-    [96 ,16,0,62,63], // Snowfield 5
-    [94 ,19,0,60,0 ], // Snowfield 6
-    [97 ,21,0,61,63], // Snowfield 7
-    [96 ,25,0,0 ,0 ], // Snowfield 8
-    [97 ,13,0,0 ,0 ], // Frozen Lake
-    [101,18,1,64,65], // Ice Castle
-    [105,16,0,72,0 ], // Snowfield 9
-    [106,23,0,66,0 ], // Beach 4
-    [102,28,0,67,0 ], // Forest 3
-    [110,30,0,68,0 ], // Forest 4
-    [114,29,0,69,0 ], // Forest 5
-    [115,26,0,70,0 ], // Forest 6
-    [113,22,1,71,0 ], // Forget Tree
-    [109,19,0,0 ,0 ], // !!!
-    [113,16,0,73,0 ], // Hell 1
-    [117,15,0,74,0 ], // Hell 2
-    [121,18,0,75,0 ], // Hell 3
-    [126,21,0,76,79], // Hell 4
-    [130,18,0,77,78], // Hell 5
-    [126,14,0,0 ,0 ], // Island
-    [135,17,0,83,0 ], // Hell 6
-    [125,25,0,80,0 ], // Inferno 1
-    [130,27,0,81,0 ], // Inferno 2
-    [135,25,0,82,0 ], // Inferno 3
-    [137,21,0,0 ,0 ], // Blood Lake
-    [136,14,1,84,0 ], // Cavern 7
-    [145,12,1,85,0 ], // Cavern 8
-    [143,17,0,86,0 ], // Hell 7
-    [139,15,0,87,0 ], // Hell 8
-    [140,10,0,88,0 ], // Hell Gate
-    [140,7 ,1,-1,89], // Hell Castle
-    [130,23,1,0 ,0 ]  // Volcano
+    [9  ,24,0,1 ,0 ], // Town
+    [4 , 23,0,2 ,0 ], // Opening Cave
+    [11 ,21,0,3 ,0 ], // Jade Tropics
+    [16 ,16,0,4 ,0 ], // Sage Grove
+    [20 ,15,0,0 ,0 ]  // Moss Hovel
 ];
     //O=1     ,P=2            ,Q=3              ,R=4             ,S=5          ,T=6      ,Mf=7                 ,Nf=8                   ,Of=9                  ,Lf=10   ,Pf=11       ,Qf=12            ,Rf=13              ,Sf=14,
 var Ground = 1;
@@ -10754,56 +11175,47 @@ var Air = 10;
 var Ceiling = 11;
 var Ceiling_Left = 12;
 var Ceiling_Middle = 13;
-var Ceiling_Left = 14;
+var Ceiling_Right = 14;
 var Stage_Spawns = [
     [   //0 Town
         [0,0  ,Ground,0,0,Ground,0,0,Ground,0,0,Ground,0,0],
         [0,100,Ground,0]
     ],
-    [   //1 Halloween Hills
-        [0,1  ,Ground     ,0,5 ,Ground_Middle,1,1],
+    [   //1 Opening Cave
+        [4,103],
         //[0,100,Ground_Left,4,1], // training ground
-        [0,1  ,Ground     ,0,6 ,Ground_Middle,1,3],
-        [0,1  ,Ground     ,0,6 ,Ground_Left  ,1,2,Ground_Middle,2,1],
-        [0,1  ,Ground     ,1,5 ,Ground_Middle,2,3],
-        [0,1  ,Ground     ,2,5 ,Ground_Middle,1,2],
-        [0,1  ,Ground     ,0,20],
-        [0,1  ,Ground     ,2,8 ,Ground_Middle,3,1],
-        [0,1  ,Ground     ,2,8 ,Ground_Left  ,0,3,Ground_Middle,3,2],
-        [0,1  ,Ground     ,2,8 ,Ground_Left  ,3,1,Ground_Middle,3,2,Ground_Right,3,3],
-        [0,100,Ground_Left,2,2 ,Ground_Middle,3,2,Ground_Middle ,4,1]
+        [4,5  ,Ground     ,0,6 ,Ground_Middle,1,3],
+        [4,5  ,Ground     ,0,6 ,Ground_Left  ,1,2,Ground_Middle,2,1],
+        [4,12  ,Ground     ,2,8 ,Water,3,2],
+        [4,12  ,Ground     ,2,8 , Ground_Middle,1,3, Water,3,3],
+        [4,104, Air,4,1, Water,3,4]
     ],
-    [   //2 Grassland 1
-        [0,2  ,Ground_Left,5,1 ,Ground_Middle,5,2,Ground_Right ,5,3 ],
-        [0,2  ,Ground     ,5,6 ,Ground_Middle,6,2],
-        [0,2  ,Ground_Left,5,6 ,Ground_Middle,6,4],
-        [0,2  ,Ground_Left,5,12],
-        [0,2  ,Ground     ,5,6 ,Ground_Left  ,6,2,Ground_Middle,6,2 ,Ground_Right,7,1],
-        [0,2  ,Ground_Left,6,3 ,Ground_Middle,7,2,Ground_Right ,6,3 ],
-        [0,2  ,Ground_Left,7,3 ,Ground_Middle,6,4],
-        [0,100,Ground_Left,5,1 ,Ground_Middle,5,6,Ground_Right ,8,12]
+    [   //2 Jade Tropics
+        [0,1  ,Ground_Left,5,1 ,Ground_Middle,5,2,Ground ,5,3 ],
+        [0,6  ,Ground     ,5,6 ,Ground_Middle,6,1],
+        [0,6  ,Ground     ,5,6 ,Ground_Middle,6,3],
+        [0,1  ,Ground     ,5,8 ,Ground,7,1],
+        [0,6  ,Ground_Middle,6,2,Ground_Middle,7,2,Ground,6,3 ],
+        [0,1  ,Ground_Left,5,3 ,Ground_Middle,7,2,Ground ,6,3],
+        [0,105,Ground_Left,6,2 ,Ground_Right,6,2,Ground_Middle ,8,8]
     ],
-    [   //3 Grassland 2
-        [0,2  ,Ground     ,9 ,2,Ground_Left  ,10,1,Ground_Middle,10,1,Ground_Right,10,1],
-        [0,2  ,Ground     ,9 ,3,Ground_Left  ,10,1,Ground_Middle,10,3,Ground_Right,10,2],
-        [0,2  ,Ground_Left,10,1,Ground_Middle,10,1,Ground_Right ,9 ,5],
-        [0,2  ,Ground     ,9 ,3,Ground_Left  ,10,2,Ground_Middle,10,3,Ground_Right,11,2],
-        [0,2  ,Ground     ,11,3,Ground_Left  ,10,3,Ground_Middle,10,3,Ground_Right,10,3],
-        [0,2  ,Ground     ,10,8,Ground_Left  ,10,4,Ground_Middle,9 ,3,Ground_Right,12,1],
-        [0,2  ,Ground     ,10,8,Ground_Left  ,9 ,3,Ground_Middle,12,1,Ground_Right,11,5],
-        [0,2  ,Ground     ,9 ,5,Ground_Left  ,10,3,Ground_Middle,12,3,Ground_Right,11,3],
-        [0,100,Ground_Left,12,2,Ground_Middle,13,1,Ground_Right ,11,2]
+    [   //3 Sage Grove
+        [3,1  ,Air     ,9, 3, Ground_Middle, 10, 2],
+        [3,1  ,Air     ,9, 4, Ground_Left  ,10,1,Ground_Middle,10,3,Ground_Right,10,1],
+        [3,13  ,Air     ,9 ,7],
+        [3,13  ,Ground_Middle,11, 3, Ground, 10, 4],
+        [3,13  ,Ground_Right ,12,1,Air          ,9,7, Ground_Middle,10,5],
+        [3,13  ,Air     ,9 ,5,Ground_Left  ,10,3,Ground_Middle,12,3,Ground,11,4],
+        [3,0,Ground_Middle,12,2,Ground_Middle,13,1,Ground ,11,2]
     ],
-    [   //4 Grassland 3
-        [0,2  ,Ground     ,15,3,Ground_Middle,14,1,Ground_Right ,14,1],
-        [0,2  ,Ground     ,15,3,Ground_Left  ,16,1,Ground_Middle,14,1,Ground_Right,14,1],
-        [0,2  ,Ground_Left,15,3,Ground_Middle,16,3,Ground_Right ,14,3],
-        [0,2  ,Ground     ,16,6,Ground_Left  ,14,1,Ground_Middle,14,1,Ground_Right,14,1],
-        [0,2  ,Ground     ,15,9,Ground_Right ,17,1],
-        [0,2  ,Ground     ,17,1,Ground_Left  ,15,6,Ground_Middle,16,3,Ground_Right,14,3],
-        [0,2  ,Ground     ,17,2,Ground_Left  ,14,3,Ground_Middle,14,3,Ground_Right,14,3],
-        [0,2  ,Ground     ,17,3,Ground_Left  ,15,6,Ground_Middle,16,3,Ground_Right,16,3],
-        [0,100,Ground_Left,15,3,Ground_Middle,18,1,Ground_Right ,15,3]
+    [   //4 Moss Hovel
+        [3,14  ,Ceiling     ,15,3,Ground_Middle,14,1,Ground_Right ,14,1],
+        [3,14  ,Ceiling     ,15,3,Ground_Left  ,16,1,Ground_Middle,14,1,Ground_Right,14,1],
+        [3,14 ,Ceiling     ,15,3,Ground_Middle,16,3,Ground_Right ,14,3],
+        [3,14  ,Ceiling     ,15,9,Ground_Middle ,17,1],
+        [3,14  ,Ground     ,17,2,Ground_Left  ,14,3,Ground_Middle,14,3,Ground_Right,14,3],
+        [3,14  ,Ground     ,17,3,Ceiling      ,15,6,Ground_Middle,16,3,Ground_Right,16,3],
+        [3,102,Ceiling_Left,15,3,Ground_Middle_Clump,18,1,Ceiling_Right ,15,3]
     ],
     [   //5 Grassland 4
         [0,2  ,Ground     ,19,5 ],
@@ -11504,7 +11916,7 @@ SR_Projectile.prototype.PJreset = function(){ // aa.j
 };
 
 // tracks projectiles/hits original name: aa.add
-SR_Projectile.prototype.PJadd = function(class_ID,x_pos,y_pos,Xspd,Yspd,orient,img,color,transp,width,height,box_width,box_height,appear_delay,solid_delay,lifespan,disp_eff,grav,accel,pierce,bounce,homing,knockback,splash,AT_Min,AT_Max,res_type,res_type_param,res_mode,res_orient,res_img,Res_Color,res_transp,res_width,res_height,res_box_width,res_box_height,res_appear_delay,res_solid_delay,Res_Lifespan,res_fade_time,res_grav,res_accel,res_pierce,res_bounce,res_splash,res_ATmin,res_ATmin,res_bullet,base_res_type,base_res_type_param){
+SR_Projectile.prototype.PJadd = function(class_ID,x_pos,y_pos,Xspd,Yspd,orient,img,color,transp,width,height,box_width,box_height,appear_delay,solid_delay,lifespan,disp_eff,grav,accel,pierce,bounce,homing,knockback,splash,AT_Min,AT_Max,res_type,res_type_param,res_mode,res_orient,res_img,Res_Color,res_transp,res_width,res_height,res_box_width,res_box_height,res_appear_delay,res_solid_delay,Res_Lifespan,res_fade_time,res_grav,res_accel,res_pierce,res_bounce,res_splash,res_ATmin,res_ATmax,res_bullet,base_res_type,base_res_type_param){
     if (this.PJ_index!=DIRE_Proj_Limit){
         this.PJ_class_ID[this.PJ_index] = class_ID;
         assignVector2D(this.PJ_body[this.PJ_index],x_pos,y_pos);
@@ -11551,8 +11963,8 @@ SR_Projectile.prototype.PJadd = function(class_ID,x_pos,y_pos,Xspd,Yspd,orient,i
         this.PJ_res_pierce[this.PJ_index] = res_pierce;
         this.PJ_res_bounce[this.PJ_index] = res_bounce;
         this.PJ_res_splash[this.PJ_index] = res_splash;
-        this.PJ_res_AT_min[this.PJ_index] = res_ATmin;
-        this.PJ_res_AT_max[this.PJ_index] = res_ATmin;
+        this.PJ_res_AT_min[this.PJ_index] = res_ATmin; 
+        this.PJ_res_AT_max[this.PJ_index] = res_ATmax; //aha
         this.PJ_res_bullet[this.PJ_index] = res_bullet;
         this.PJ_res_base_type[this.PJ_index] = base_res_type;
         this.PJ_res_base_type_param[this.PJ_index] = base_res_type_param;
@@ -11706,9 +12118,10 @@ SR_Projectile.prototype.PJmain = function(){ // aa.move
             d = this.PJifContact(curr_proj,vec_c);
             b = 1;
 
+            // burn rate damage (change to fixed?)
             if (this.PJ_res_type[curr_proj]==1 && this.PJ_res_type_param[curr_proj]!=0 && random(1000)>this.PJ_res_type_param[curr_proj])
                 b = 0;
-            if (this.PJ_solid_delay[curr_proj] > 0){
+            if (this.PJ_solid_delay[curr_proj] > 0){ //mkay now just normal damage
                 this.PJ_solid_delay[curr_proj]--;
                 b = 0;
             }
@@ -12195,7 +12608,7 @@ SR_Drop.prototype.DPmain = function(){ // aa.move
         var Ytile_pos = b>>3;
         var tile_data = Terrain.TR_tile_data[Ytile_pos][Xtile_pos];
 
-        if (tile_data==-1 || tile_data==9)
+        if (tile_data<=-1 || tile_data==9)
             this.DP_position[d].y = b;
 
         b = clamp(this.DP_position[d].x+this.DP_velocity[d].x,16,Win_Width-16-1);
@@ -12203,7 +12616,7 @@ SR_Drop.prototype.DPmain = function(){ // aa.move
         Xtile_pos = b>>3;
         tile_data = Terrain.TR_tile_data[Ytile_pos][Xtile_pos];
 
-        if (tile_data==-1 || tile_data==9)
+        if (tile_data<=-1 || tile_data==9)
             this.DP_position[d].x = b;
 
         var target_player = Players.PLfindPlayer(this.DP_position[d].x-12,this.DP_position[d].y-6-12,this.DP_position[d].x+12,this.DP_position[d].y-6+12,0)
@@ -12213,6 +12626,7 @@ SR_Drop.prototype.DPmain = function(){ // aa.move
             antiCheatCheck();
 
             if (this.DP_item_ID[d]==1){ // gold pickup
+                PlaySoundSFX(snd_money, false);
                 Team_Gold = clamp(Team_Gold+this.DP_val1[d],0,9999999);
                 Indicators.INadd(this.DP_position[d].x,this.DP_position[d].y,0,this.DP_val1[d],0xFFFF00);
             } else if (this.DP_item_ID[d]==2){ // onigiri pickup
@@ -12228,12 +12642,14 @@ SR_Drop.prototype.DPmain = function(){ // aa.move
                 LP_Current[target_player] = clamp(LP_Current[target_player]+floor(LP_Max[target_player]/5),0,LP_Max[target_player]);
                 antiCheatSet();
                 Indicators.INadd(this.DP_position[d].x,this.DP_position[d].y,0,floor(LP_Max[target_player]/5),0x00FF00);
+                PlaySoundSFX(snd_onigiri, false);
             } else {
                 for (var j=Inv_First; j<Inv_Last; j++){ // search for next open slot
                     if (Item_Inv[j]==0){ // if there ds space, add item to inventory
                         Item_Inv[j] = this.DP_item_ID[d];
                         Comp1_Inv[j] = this.DP_val1[d];
                         Comp2_Inv[j] = this.DP_val2[d];
+                        PlaySoundSFX(snd_weapon, false);
                         break;
                     }
                 }
@@ -12365,12 +12781,15 @@ SR_Terrain.prototype.TRset = function(stage_number){ // th.prototype.j
 
             } else if (Stage_Terrain_Img.IG_pxl_color_index[cur_pxl]==0x0000FF){ // if pixel is blue
                 this.TR_tile_data[y][x] = 9;
+            } else if (Stage_Terrain_Img.IG_pxl_color_index[cur_pxl]==0xFF0000){ // if pixel is red
+                this.TR_tile_data[y][x] = -2;
             }
+            
         }
     } // set player spawns to the first 4 open tiles
     for (var x=0; x<this.TR_width; x++){ // left to right
         for (var y=this.TR_height-1; y>=0; y--){ // bottom to top
-            if (this.TR_tile_data[y][x]==-1 || this.TR_tile_data[y][x]==9){ // if tile is air or water
+            if (this.TR_tile_data[y][x]<=-1 || this.TR_tile_data[y][x]==9){ // if tile is air or water
                 this.TR_low_dry_surface[x] = y;
                 this.DIRE_tile_indicator_color[y][x] = 0xFF0000;
                 break;
@@ -12380,7 +12799,7 @@ SR_Terrain.prototype.TRset = function(stage_number){ // th.prototype.j
     for (var x=0; x<this.TR_width; x++){ // left to right
         for (var y=1; y<this.TR_height; y++){ // top to bottom
                 // if (above tile is air or water) && current tile is solid
-            if ((this.TR_tile_data[y-1][x]==-1 || this.TR_tile_data[y-1][x]==9) && 0<=this.TR_tile_data[y][x] && this.TR_tile_data[y][x]<=8){
+            if ((this.TR_tile_data[y-1][x]<=-1 || this.TR_tile_data[y-1][x]==9) && 0<=this.TR_tile_data[y][x] && this.TR_tile_data[y][x]<=8){
                 this.TR_high_surface[x] = y-1;
                 this.DIRE_tile_indicator_color[y-1][x] = 0xFFFF00;
                 break;
@@ -12389,7 +12808,7 @@ SR_Terrain.prototype.TRset = function(stage_number){ // th.prototype.j
     } // sets air or water tiles that are directly on the ceiling surface
     for (var x=0; x<this.TR_width; x++){ // left to right
         for (var y=0; y<this.TR_height; y++){ // top to bottom
-            if (this.TR_tile_data[y][x]==-1 || this.TR_tile_data[y][x]==9){ // if current tile is air or water
+            if (this.TR_tile_data[y][x]<=-1 || this.TR_tile_data[y][x]==9){ // if current tile is air or water
                 this.TR_air_ceil[x] = y;
                 this.DIRE_tile_indicator_color[y][x] = 0x00FF00;
                 break;
@@ -12400,7 +12819,7 @@ SR_Terrain.prototype.TRset = function(stage_number){ // th.prototype.j
         this.TR_air_floor[x] = this.TR_air_ceil[x];
         for (var y=1; y<this.TR_height; y++){ // top to bottom
                 // if (above tile is air or water) current tile is solid or water
-            if ((this.TR_tile_data[y-1][x]==-1 || this.TR_tile_data[y-1][x]==9) && 0<=this.TR_tile_data[y][x] && this.TR_tile_data[y][x]<=9){
+            if ((this.TR_tile_data[y-1][x]<=-1 || this.TR_tile_data[y-1][x]==9) && 0<=this.TR_tile_data[y][x] && this.TR_tile_data[y][x]<=9){
                 this.TR_air_floor[x] = y-1;
                 this.DIRE_tile_indicator_color[y-1][x] = 0x0000FF;
                 break;
@@ -12423,7 +12842,7 @@ SR_Terrain.prototype.TRset = function(stage_number){ // th.prototype.j
 
         var auxb = Game_Canvas;
         switch (this.TR_stage_num){ // stage mist effect
-            case 15:
+            case 3:
             case 16:
             case 30:
             case 31:
@@ -12470,6 +12889,10 @@ SR_Terrain.prototype.TRdrawTerrain = function(){ // th.prototype.b
                         drawItem(Water_Img,8*x,8*y,8,8,0,0,8,8);
                     } else {
                         backgroundFill(8*x-4,8*y,16,8,0x00559C);
+                    }
+                } else if (tile_type==-2){                      // if tile is decoration
+                    if (this.TR_stage_num==4){                  // if stage is moss hovel
+                        drawItem(Wood_Img,8*x,8*y,8,8,0,0,8,8);
                     }
                 } else {
                     drawItem(texture,8*x,8*y,8,8,gif_xpos[tile_type],gif_ypos[tile_type],8,8);
@@ -12639,6 +13062,7 @@ SR_map.prototype.MAPmain = function(){ // uh.prototype.b
                 //largeMessage(Small_Text,this.MAP_tile_horizontal_spacer+16*x+16,16*y+15,""+this.MAP_feature_array[y][x],0x55,0x55,0x55,fill1,0,0,0,0,5,7); // map tile debug
         }
     }
+    /*
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+384-8,124,16,16,16,0,16,16,0xFF8080FF);
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+504-8,116,16,16,48,0,16,16,0xFFFFFFFF);
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+552-8,116,16,16,64,0,16,16,0xFFFFFFFF);
@@ -12650,6 +13074,7 @@ SR_map.prototype.MAPmain = function(){ // uh.prototype.b
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+1088-8,100,16,16,32,0,16,16,0xFFFFFFFF);
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+1160-8,84,16,16,32,0,16,16,0xFFFFFFFF);
     dispItem(Map_Features_Img,this.MAP_tile_horizontal_spacer+1112-8,44,32,16,144,0,32,16,0xFFFFFFFF);
+    */
 
     var dot_color,dot_size;
     for (var s=0; s<Stage_Count; s++){ // stages dot colors
@@ -12786,6 +13211,10 @@ function mainSequence(){ // original name: rf()
     Left_Click_Was_Down = Left_Click_Is_Down;
     Right_Click_Was_Down = Right_Click_Is_Down;
     Left_Click_Is_Up = !(Released|Left_Click_Was_Down|Right_Click_Released|Right_Click_Was_Down);
+
+    if (Clicked) {
+        //PlaySound(snd_click, false);
+    }
 
     if (Released)
         Sett_Change = 1;
@@ -13631,8 +14060,10 @@ document.onmousedown = function(event){ // original name: vh.onmousedown
     Mouse_In_Window = false;
     if (!(Mouse_Xpos2<0 || Win_Width<=Mouse_Xpos2 || Mouse_Ypos2<0 || Win_Height<=Mouse_Ypos2)){
         Mouse_In_Window = true;
-        if (event.button==0)
+        if (event.button==0) {
             Left_Click_Is_Down = true;
+            // PlaySoundInterrupt(snd_click, false);
+        }
         if (event.button==2)
             Right_Click_Is_Down = true;
         //if (Mouse_In_Window)
@@ -13946,4 +14377,46 @@ function getLeader(stickman_ID,team){
         leader = (1-floor(stickman_ID/Stickmen_Slots))*Stickmen_Slots
 
     return leader;
+}
+
+function PlaySound(a, b) {
+	if (!a.playing) {
+			a.loop = b;
+			a.play();
+			a.playing = true;
+		}
+}
+
+function PlaySoundSFX(a, b) {
+	if (!a.playing && sfxEnabled) {
+			a.loop = b,
+			a.play();
+		}
+}
+
+function PlaySoundInterrupt(a, b) {
+	stop(a);
+	if (sfxEnabled)
+	a.loop = b, a.play(), a.playing = true;
+}
+
+function stop(a) {
+	a.pause();
+	a.currentTime = 0;
+	a.playing = false;
+}
+
+function StopLevelBGM() {
+  for(i=0; i<LevelBGM.length; i++) stop(LevelBGM[i]);
+}
+
+function ChangeBGM(a) {
+	if (!a.playing) {
+			StopLevelBGM();
+			PlaySound(a, true);
+		}
+}
+
+function RegisterLevelBGM(a) {
+	LevelBGM.push(a);
 }
